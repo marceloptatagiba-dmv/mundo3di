@@ -290,12 +290,11 @@
     return ddd + d.slice(2, corte) + '-' + d.slice(corte);
   }
 
-  /* ---------- Meu negócio, numeração e registro de envios ---------- */
+  /* ---------- Meu negócio e dados do orçamento (o registro dos envios fica em dados.js) ---------- */
 
   var NOME_PADRAO = 'Mundo 3DI';
   var LIMITES_NEGOCIO = { nome: 40, whatsapp: 20, instagram: 40, cidade: 40, cnpj: 18, prazo: 40, pagamento: 80, obs: 160 };
   var VALIDADE_PADRAO = 7;     // dias
-  var MAX_REGISTROS = 2000;
 
   /* Dados do negócio de uma configuração salva. Texto aparado e limitado; validade em dias (0 = não mostrar). */
   function lerNegocio(salvo) {
@@ -321,22 +320,30 @@
 
   function doisDigitos(n) { return (n < 10 ? '0' : '') + n; }
   function formatarData(d) { return doisDigitos(d.getDate()) + '/' + doisDigitos(d.getMonth() + 1) + '/' + d.getFullYear(); }
+  /* '2026-11-21' -> '21/11/2026'; qualquer outra coisa -> '' */
+  function isoParaBR(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso == null ? '' : iso));
+    return m ? m[3] + '/' + m[2] + '/' + m[1] : '';
+  }
   function somarDias(d, dias) { var x = new Date(d.getTime()); x.setDate(x.getDate() + dias); return x; }
 
   /*
    * Tudo o que vai escrito na imagem do orçamento — e só isso. Não recebe custo, margem, perda nem lucro
    * como campo: o desenho da imagem usa apenas este objeto.
-   * o: { negocio, numero, data (Date), cliente, descricao, material, prazo }
+   * o: { negocio, numero, data (Date), cliente, descricao, material, prazo, validadeAte }
+   * validadeAte ('AAAA-MM-DD', ou '' para não mostrar): vale no lugar de data + validade padrão (reenvio de um orçamento antigo).
    */
   function dadosOrcamento(r, o) {
     var negocio = lerNegocio(o && o.negocio);
     var data = o && o.data instanceof Date ? o.data : new Date();
     function limpa(v, max) { return String(v == null ? '' : v).replace(/\s+/g, ' ').trim().slice(0, max); }
     var descricao = limpa(o && o.descricao, 120) || (r.qtd > 1 ? r.qtd + ' peças impressas em 3D' : 'Peça impressa em 3D');
+    var validade = negocio.validadeDias > 0 ? formatarData(somarDias(data, negocio.validadeDias)) : '';
+    if (o && typeof o.validadeAte === 'string') validade = isoParaBR(o.validadeAte);
     return {
       numero: formatarNumero(o && o.numero),
       data: formatarData(data),
-      validade: negocio.validadeDias > 0 ? formatarData(somarDias(data, negocio.validadeDias)) : '',
+      validade: validade,
       negocioNome: negocio.nome || NOME_PADRAO,
       whatsapp: negocio.whatsapp, instagram: negocio.instagram, cidade: negocio.cidade, cnpj: negocio.cnpj,
       cliente: limpa(o && o.cliente, 60),
@@ -349,26 +356,6 @@
       pagamento: negocio.pagamento,
       obs: negocio.obs
     };
-  }
-
-  /* Registro local de um envio (texto ou imagem). custoTotal e lucro são de uso interno: nunca vão para o cliente. */
-  function novoRegistro(r, o) {
-    function c(n) { return Math.round(n * 100) / 100; }
-    return {
-      n: o.numero,
-      ts: (o.quando instanceof Date ? o.quando : new Date()).toISOString(),
-      formato: o.formato === 'imagem' ? 'imagem' : 'texto',
-      qtd: r.qtd, valorPeca: c(r.valorUnitario), total: c(r.valorCobrar), custoTotal: c(r.custoTotal), lucro: c(r.lucro),
-      material: o.material || '', cliente: o.cliente || '', descricao: o.descricao || ''
-    };
-  }
-
-  /* Acrescenta um registro à lista (guarda no máximo MAX_REGISTROS; os mais antigos saem primeiro). */
-  function adicionarRegistro(lista, reg, max) {
-    var nova = Array.isArray(lista) ? lista.slice() : [];
-    nova.push(reg);
-    var limite = max > 0 ? max : MAX_REGISTROS;
-    return nova.length > limite ? nova.slice(nova.length - limite) : nova;
   }
 
   /* Texto do orçamento para enviar ao cliente (não revela custo nem margem).
@@ -392,6 +379,44 @@
     return linhas.join('\n');
   }
 
+  /* ---------- Versão do app: MAJOR.MINOR.PATCH (staging: com sufixo -teste.N) ---------- */
+  var VERSAO_RE = /^(\d+)\.(\d+)\.(\d+)(?:-teste\.(\d+))?$/;
+
+  /* "0.4.0" ou "0.4.0-teste.2" -> { maior, menor, patch, teste (número ou null) }; formato inválido -> null */
+  function lerVersao(texto) {
+    var m = VERSAO_RE.exec(String(texto == null ? '' : texto));
+    if (!m) return null;
+    return { maior: Number(m[1]), menor: Number(m[2]), patch: Number(m[3]), teste: m[4] === undefined ? null : Number(m[4]) };
+  }
+
+  /* -1 (a anterior a b), 0 (iguais) ou 1 (a posterior a b); versão inválida -> null.
+     Como no semver, 0.4.0-teste.5 vem antes de 0.4.0. */
+  function compararVersoes(a, b) {
+    var x = lerVersao(a), y = lerVersao(b);
+    if (!x || !y) return null;
+    var pa = [x.maior, x.menor, x.patch], pb = [y.maior, y.menor, y.patch];
+    for (var i = 0; i < 3; i++) if (pa[i] !== pb[i]) return pa[i] < pb[i] ? -1 : 1;
+    if (x.teste === y.teste) return 0;
+    if (x.teste === null) return 1;
+    if (y.teste === null) return -1;
+    return x.teste < y.teste ? -1 : 1;
+  }
+
+  /* Aviso mostrado uma vez depois de atualizar. Compara a versão em uso com a última vista neste aparelho.
+     novidades: { '0.4': 'histórico, backup e catálogo' } por MAJOR.MINOR (o sufixo -teste.N é ignorado na busca).
+     Retorna { titulo, detalhe } ou null quando não há o que avisar (versão igual, mais antiga ou inválida). */
+  function avisoAtualizado(atual, vista, novidades) {
+    var a = lerVersao(atual), v = lerVersao(vista);
+    if (!a || !v || compararVersoes(atual, vista) <= 0) return null;
+    var titulo = 'Atualizado para a ' + atual;
+    if (a.maior !== v.maior || a.menor !== v.menor) {
+      var n = novidades && novidades[a.maior + '.' + a.menor];
+      return { titulo: titulo, detalhe: n ? 'Novo: ' + n : '' };
+    }
+    if (a.patch !== v.patch) return { titulo: titulo + ' (correções)', detalhe: '' };
+    return { titulo: titulo, detalhe: '' };   // só mudou o número do teste (staging)
+  }
+
   var Calc = {
     PADROES: PADROES, lerNumero: lerNumero, lerTempo: lerTempo, formatarTempo: formatarTempo,
     lerQuantidade: lerQuantidade, calcular: calcular, moeda: moeda, decimal: decimal,
@@ -403,9 +428,10 @@
     formatarTelefone: formatarTelefone,
     MAX_CORES: MAX_CORES, resumirCores: resumirCores,
     MODOS_ARREDONDAMENTO: MODOS_ARREDONDAMENTO, lerArredondamento: lerArredondamento, arredondarCima: arredondarCima,
-    NOME_PADRAO: NOME_PADRAO, LIMITES_NEGOCIO: LIMITES_NEGOCIO, VALIDADE_PADRAO: VALIDADE_PADRAO, MAX_REGISTROS: MAX_REGISTROS,
+    NOME_PADRAO: NOME_PADRAO, LIMITES_NEGOCIO: LIMITES_NEGOCIO, VALIDADE_PADRAO: VALIDADE_PADRAO,
     lerNegocio: lerNegocio, formatarNumero: formatarNumero, formatarData: formatarData,
-    dadosOrcamento: dadosOrcamento, novoRegistro: novoRegistro, adicionarRegistro: adicionarRegistro
+    dadosOrcamento: dadosOrcamento,
+    VERSAO_RE: VERSAO_RE, lerVersao: lerVersao, compararVersoes: compararVersoes, avisoAtualizado: avisoAtualizado
   };
   if (typeof module !== 'undefined' && module.exports) { module.exports = Calc; }
   root.Calc = Calc;

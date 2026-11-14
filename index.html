@@ -172,6 +172,142 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
 .aviso{position:fixed;left:50%;top:calc(84px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-20px);background:var(--preto);color:#fff;font-size:14px;font-weight:700;
   padding:12px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10}
 .aviso.ver{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ---- Versão: linha no cabeçalho de Configurações, faixa de nova versão e aviso depois de atualizar ---- */
+.titulo-config{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.titulo-config h1{flex:none;line-height:1.15}
+.versao-cab{display:flex;align-items:baseline;gap:4px;min-width:0;font-size:12px;font-weight:600;line-height:1.2;color:var(--suave)}
+.versao-cab #versao-uso{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.link-versao{flex-shrink:0;border:0;background:none;padding:12px 0;margin:-12px 0;font-size:12px;font-weight:800;color:var(--verde-texto);text-decoration:underline;white-space:nowrap}
+.link-versao[hidden]{display:none}
+.faixa-versao{position:fixed;left:12px;right:12px;top:calc(78px + env(safe-area-inset-top));z-index:9;max-width:480px;margin:0 auto;background:var(--preto);color:#fff;border-radius:14px;
+  padding:10px 8px 10px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(14,15,16,.25)}
+.faixa-versao[hidden]{display:none}
+.faixa-versao p{margin:0;flex:1;min-width:0;font-size:13px;font-weight:600;line-height:1.35}
+.faixa-versao p strong{display:block;font-size:14px;font-weight:800}
+.faixa-versao .atualizar{height:40px;padding:0 14px;border:0;border-radius:10px;background:var(--verde-claro);color:var(--preto);font-size:14px;font-weight:800;flex-shrink:0}
+.faixa-versao .fechar{color:var(--suave-escuro);margin:0;flex-shrink:0}
+.aviso.versao{width:min(330px,calc(100vw - 24px));text-align:center;line-height:1.35}
+.aviso.versao span{display:block;font-size:12px;font-weight:600;color:var(--suave-escuro)}
+.aviso.versao span:empty{display:none}
+
+/* ---- Histórico de orçamentos (v4, etapa 2) ---- */
+.marca{min-width:0}
+.icones{display:flex;gap:8px;flex-shrink:0}
+.icone.novo{border-color:var(--verde);color:var(--verde-texto)}
+@media (max-width:379px){.marca span{display:none}}
+#tela-hist main{gap:10px;padding-top:12px}
+.caixa.busca{height:44px;background:#fff}
+.caixa.busca input{font-size:16px;font-weight:500;-webkit-appearance:none;appearance:none}
+.caixa.busca input::-webkit-search-cancel-button{-webkit-appearance:none}
+.chips{display:flex;gap:6px;flex-wrap:nowrap}
+.chip{flex:1;min-width:0;height:36px;padding:0 6px;border-radius:999px;border:1.5px solid var(--borda);background:#fff;font-size:13px;font-weight:700;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--preto);border-color:var(--preto);color:#fff}
+.chip.claro{flex:none;height:32px;font-size:12px;font-weight:600;padding:0 12px;background:var(--fundo);border-color:var(--linha);max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.chips.clientes{flex-wrap:wrap}
+.chips[hidden]{display:none}
+.resumo{background:#fff;border-radius:16px;padding:12px 16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.resumo .num{display:flex;flex-direction:column;gap:2px;min-width:0}
+.resumo .num b{font-size:16px;font-weight:800;overflow-wrap:anywhere}
+.resumo .num span{font-size:11px;font-weight:600;color:var(--suave)}
+.resumo .num.apr b{color:#2F6402}
+.dia{margin:6px 2px -2px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--suave)}
+.lista-hist{background:#fff;border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
+.item{display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;border:0;border-top:1px solid var(--linha);background:#fff;text-align:left;color:var(--preto)}
+.item:first-child{border-top:0}
+.item .meio{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.item .meio strong{font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .meio strong.sem{color:#6B7367;font-weight:600}
+.item .meio span.peca{font-size:12px;font-weight:500;color:var(--suave);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.item .sup{font-size:11px;font-weight:700;color:var(--suave);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.item .sup svg{flex-shrink:0}
+.item .dir{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.item .dir b{font-size:15px;font-weight:800;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.pill.enviado{background:#EEF1EC;color:#4A524A}
+.pill.aprovado{background:#E3F0D5;color:#2F6402}
+.pill.recusado{background:#F7E4DB;color:#8F2F08}
+.pill.vencido{background:#FDF0D6;color:#8A4B04}
+.pill.cat{background:#EEF5E6;color:#3A7A03}
+.vazio{margin:18px 8px;text-align:center;font-size:14px;font-weight:500;line-height:1.5;color:var(--suave)}
+.vazio[hidden]{display:none}
+.faixa-backup{display:flex;align-items:center;gap:10px;padding:10px 12px 10px 14px;border-radius:14px;background:#FDF0D6;border:1.5px solid #F2D49B;font-size:13px;font-weight:600;color:#5C3303}
+.faixa-backup[hidden]{display:none}
+.faixa-backup p{margin:0;flex:1;line-height:1.35}
+.faixa-backup button{border:0;background:none;padding:10px 0;font:inherit;font-weight:800;color:#5C3303;text-decoration:underline;white-space:nowrap}
+.faixa-backup button[hidden]{display:none}
+.backup .linha .rot span{line-height:1.35}
+.backup .botoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.backup .btn svg,.btn.com-icone svg{flex-shrink:0}
+.backup .btn,.btn.com-icone{display:flex;align-items:center;justify-content:center;gap:8px}
+.arquivo{display:flex;gap:12px;align-items:center;padding:12px;border-radius:12px;background:var(--fundo)}
+.arquivo .doc{width:40px;height:48px;border-radius:8px;background:#fff;border:1.5px solid var(--borda);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--verde-texto);flex-shrink:0}
+.arquivo p{margin:0;display:flex;flex-direction:column;gap:2px;min-width:0}
+.arquivo strong{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arquivo span{font-size:12px;font-weight:500;color:var(--suave)}
+.conteudo{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.conteudo li{display:flex;gap:10px;align-items:center;font-size:14px;font-weight:600}
+.conteudo li svg{color:var(--verde);flex-shrink:0}
+.erro-backup{margin:0;font-size:14px;font-weight:600;line-height:1.45;color:#8F2F08}
+.erro-backup[hidden],.interno[hidden],.arquivo[hidden],.conteudo[hidden]{display:none}
+.interno{background:var(--fundo);border:1.5px dashed var(--borda);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.interno .tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--suave)}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1.5px solid var(--borda);border-radius:12px;overflow:hidden}
+.seg button{height:44px;border:0;border-left:1.5px solid var(--borda);background:#fff;font-size:13px;font-weight:700;padding:0}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--suave);color:#fff}
+.seg button[aria-pressed="true"][data-st="aprovado"]{background:var(--verde)}
+.seg button[aria-pressed="true"][data-st="recusado"]{background:#8F2F08}
+.btn.perigo{color:#A3360A;border-color:#E9C9B8}
+.btn.peq{height:44px;font-size:14px}
+.btn:disabled{opacity:.4;cursor:default}
+.folha-topo i{font-style:normal;color:var(--preto)}
+.folha-corpo .linha .rot strong{font-size:14px}
+.nota-antigo{margin:0;font-size:12px;font-weight:600;line-height:1.4;color:#8A4B04}
+.nota-antigo[hidden]{display:none}
+.ajuda[hidden]{display:none}
+/* catálogo de peças */
+.titulo-linha{display:flex;align-items:center;justify-content:space-between;gap:8px;height:16px}
+.titulo-linha .titulo-secao{white-space:nowrap;flex-shrink:0}
+.link-titulo{display:flex;align-items:center;min-width:0;flex:0 1 auto;height:30px;margin:-7px 0;font-size:13px;font-weight:700;color:var(--verde-texto)}
+.link-titulo .lt-abrir{flex:1 1 auto}
+.link-titulo button{position:relative;display:flex;align-items:center;gap:5px;height:30px;min-width:0;border:0;background:none;color:inherit;font:inherit;padding:0 2px;white-space:nowrap}
+.link-titulo button::after{content:"";position:absolute;inset:-7px -2px}
+.link-titulo svg{flex-shrink:0}
+.link-titulo span{overflow:hidden;text-overflow:ellipsis}
+.link-titulo.cheio{background:#EEF5E6;border-radius:999px;padding-left:10px}
+.link-titulo .lt-x{width:30px;justify-content:center;padding:0;flex-shrink:0}
+.link-titulo .lt-x[hidden]{display:none}
+#tela-cat main{gap:10px;padding-top:12px}
+.salvar-atual{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border:1.5px dashed var(--verde);border-radius:14px;background:#fff;text-align:left;color:var(--preto)}
+.salvar-atual:disabled{opacity:.45}
+.salvar-atual .mais-ic{width:36px;height:36px;border-radius:10px;background:var(--verde);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.salvar-atual p{margin:0;flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.salvar-atual strong{font-size:14px;font-weight:800}
+.salvar-atual span{font-size:12px;font-weight:500;color:var(--suave)}
+.cat{display:flex;flex-direction:column;gap:8px;width:100%;padding:12px 16px;border:0;border-top:1px solid var(--linha);background:#fff;text-align:left;color:var(--preto)}
+.cat:first-child{border-top:0}
+.cat .topo{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.cat .topo strong{font-size:15px;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat .topo b{font-size:16px;font-weight:800;white-space:nowrap}
+.cat .topo b small{font-size:11px;font-weight:600;color:var(--suave)}
+.cat .info{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:12px;font-weight:500;color:var(--suave)}
+.cat .info>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.var{font-size:11px;font-weight:700;border-radius:999px;padding:3px 8px;white-space:nowrap;flex-shrink:0}
+.var.sobe{background:#FDF0D6;color:#8A4B04}
+.var.igual,.var.desce{background:#EEF1EC;color:var(--suave)}
+.alerta{margin:0;font-size:12px;font-weight:600;line-height:1.4;color:#8A4B04}
+.alerta[hidden]{display:none}
+.stepper{display:grid;grid-template-columns:56px minmax(0,1fr) 56px;gap:8px;align-items:center}
+.stepper button{height:52px;border-radius:12px;border:1.5px solid var(--borda);background:#fff;font-size:24px;font-weight:700;padding:0}
+.stepper .caixa{height:52px;justify-content:center}
+.stepper .caixa input{text-align:center;font-size:24px}
+.chips.atalhos-ped .chip{flex:1;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;line-height:1.1;padding:0 4px}
+.chips.atalhos-ped .chip small{font-size:10px;font-weight:600}
+.salvo-box{background:var(--fundo);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.salvo-box .tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--suave)}
+.salvo-box strong{font-size:14px;font-weight:700}
+.salvo-box span{font-size:12px;font-weight:500;color:var(--suave)}
 </style>
 </head>
 <body>
@@ -184,9 +320,14 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
         <img src="img/logo-3di.png" alt="3Di" width="77" height="46">
         <div><strong>Mundo 3DI</strong><span>Orçamento de peças 3D</span></div>
       </div>
+      <div class="icones">
+      <button class="icone novo" type="button" id="ir-hist" aria-label="Orçamentos enviados">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+      </button>
       <button class="icone" type="button" id="ir-config" aria-label="Configurações">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
+      </div>
     </header>
 
     <main>
@@ -199,7 +340,13 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
       </div>
 
       <section class="cartao" aria-labelledby="t-dados">
-        <h2 class="titulo-secao" id="t-dados">Dados da peça</h2>
+        <div class="titulo-linha">
+          <h2 class="titulo-secao" id="t-dados">Dados da peça</h2>
+          <span class="link-titulo" id="cat-link">
+            <button type="button" class="lt-abrir" id="cat-abrir" aria-label="Abrir o catálogo de peças"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5V5a2 2 0 0 1 2-2h14v16H6.5A2.5 2.5 0 0 0 4 21.5"/><path d="M20 19v3H6.5"/></svg><span id="cat-link-txt">Catálogo</span></button>
+            <button type="button" class="lt-x" id="cat-desvincular" aria-label="Desvincular a peça do catálogo" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+          </span>
+        </div>
         <div class="grade2">
           <div class="campo">
             <span class="rot-linha"><label for="peso">Peso da mesa</label>
@@ -284,7 +431,10 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
       <button class="icone" type="button" id="voltar" aria-label="Voltar">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
       </button>
-      <h1>Configurações</h1>
+      <div class="titulo-config">
+        <h1>Configurações</h1>
+        <div class="versao-cab"><span id="versao-uso"></span><button class="link-versao" type="button" id="versao-atualizar" hidden></button></div>
+      </div>
     </header>
 
     <main>
@@ -413,6 +563,70 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
       <div class="espaco"></div>
       <button class="btn principal" type="submit" form="form-config">Salvar</button>
       <button class="btn" type="button" id="restaurar">Restaurar padrões</button>
+
+      <section class="cartao backup" id="cartao-backup" aria-labelledby="t-backup">
+        <h2 class="titulo-secao" id="t-backup">Backup</h2>
+        <div class="linha"><div class="rot"><strong id="backup-titulo"></strong><span id="backup-detalhe"></span></div></div>
+        <button class="btn principal" type="button" id="backup-fazer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>Fazer backup</button>
+        <div class="botoes">
+          <button class="btn peq" type="button" id="backup-restaurar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>Restaurar</button>
+          <button class="btn peq" type="button" id="backup-planilha"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></svg>Planilha</button>
+        </div>
+        <button class="btn mais peq" type="button" id="backup-desfazer" hidden>Desfazer restauração</button>
+        <input type="file" id="backup-arq" accept=".json,application/json" hidden>
+        <p class="ajuda neutra">Salva configurações, filamentos, logo, catálogo e histórico num arquivo. Guarde no Google Drive, no e-mail ou mande para você mesmo no WhatsApp. O arquivo tem seus custos e clientes: <strong>não envie para cliente</strong>.</p>
+      </section>
+    </main>
+  </section>
+
+  <!-- TELA: HISTÓRICO DE ORÇAMENTOS -->
+  <section class="tela" id="tela-hist" aria-label="Orçamentos enviados" hidden>
+    <header>
+      <button class="icone" type="button" id="hist-voltar" aria-label="Voltar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      </button>
+      <h1>Orçamentos</h1>
+    </header>
+    <main>
+      <div class="bloco" id="hist-controles" style="gap:10px">
+        <label class="caixa busca"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A524A" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="hist-busca" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Buscar cliente, peça ou nº" aria-label="Buscar"></label>
+        <div class="chips" role="group" aria-label="Período">
+          <button class="chip" type="button" data-per="hoje" aria-pressed="false">Hoje</button>
+          <button class="chip" type="button" data-per="7" aria-pressed="false">7 dias</button>
+          <button class="chip" type="button" data-per="30" aria-pressed="true">30 dias</button>
+          <button class="chip" type="button" data-per="tudo" aria-pressed="false">Tudo</button>
+        </div>
+        <section class="resumo" aria-live="polite" aria-label="Resumo do período">
+          <div class="num"><b id="hist-n">0</b><span>enviados</span></div>
+          <div class="num"><b id="hist-total">R$ 0,00</b><span>em orçamentos</span></div>
+          <div class="num apr"><b id="hist-apr">0</b><span id="hist-apr-txt">aprovados</span></div>
+        </section>
+        <!-- Lembrete de backup: aparece com 20 ou mais orçamentos desde o último backup (ou sem backup nenhum) -->
+        <div class="faixa-backup" id="hist-lembrete" hidden><p id="hist-lembrete-txt"></p><button type="button" id="hist-lembrete-fazer">Fazer backup</button></div>
+      </div>
+      <div id="hist-lista"></div>
+      <p class="vazio" id="hist-vazio" hidden></p>
+      <button class="btn mais" type="button" id="hist-mais" hidden>Mostrar mais</button>
+    </main>
+  </section>
+
+  <!-- TELA: CATÁLOGO DE PEÇAS -->
+  <section class="tela" id="tela-cat" aria-label="Catálogo de peças" hidden>
+    <header>
+      <button class="icone" type="button" id="cat-voltar" aria-label="Voltar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      </button>
+      <h1>Catálogo</h1>
+    </header>
+    <main>
+      <button class="salvar-atual" type="button" id="cat-salvar-atual">
+        <span class="mais-ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span>
+        <p><strong>Salvar o orçamento atual</strong><span id="cat-atual-txt"></span></p>
+      </button>
+      <label class="caixa busca" id="cat-busca-caixa"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A524A" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="cat-busca" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="Buscar peça" aria-label="Buscar peça"></label>
+      <div id="cat-lista"></div>
+      <p class="vazio" id="cat-vazio" hidden></p>
+      <p class="ajuda neutra" id="cat-nota" hidden>Preços recalculados com os custos de hoje (filamento, hora, perda e arredondamento).</p>
     </main>
   </section>
 
@@ -440,19 +654,21 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
   <div class="folha-fundo" id="folha-fundo"></div>
   <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="folha-titulo">
     <div class="folha-topo">
-      <strong id="folha-titulo">Enviar orçamento <span id="folha-numero"></span></strong>
+      <strong id="folha-titulo"><i id="folha-rotulo">Enviar orçamento</i> <span id="folha-numero"></span></strong>
       <button class="fechar" type="button" id="folha-fechar" aria-label="Fechar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
     </div>
+    <label class="campo"><span>Cliente (opcional)</span>
+      <span class="caixa texto"><input id="env-cliente" type="text" maxlength="60" autocomplete="off" placeholder="Nome do cliente"></span>
+    </label>
+    <div class="chips clientes" id="env-clientes" hidden></div>
+    <p class="ajuda neutra" id="env-ajuda">Vale para texto e imagem. Fica guardado só no seu histórico; o texto enviado ao cliente não muda.</p>
     <div class="grade2">
       <button class="btn grande" type="button" id="enviar-texto">Texto</button>
       <button class="btn grande" type="button" id="abrir-imagem" aria-pressed="false">Imagem</button>
     </div>
     <div class="bloco" id="painel-imagem" hidden>
-      <label class="campo"><span>Nome do cliente (opcional)</span>
-        <span class="caixa texto"><input id="img-cliente" type="text" maxlength="60" autocomplete="off"></span>
-      </label>
       <label class="campo"><span>Descrição da peça (opcional)</span>
         <span class="caixa texto"><input id="img-descricao" type="text" maxlength="120" autocomplete="off" placeholder="Peça impressa em 3D"></span>
       </label>
@@ -468,9 +684,169 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
   </div>
 </div>
 
+<!-- PAINEL: DETALHE DO ORÇAMENTO (histórico) -->
+<div class="folha" id="folha-det" hidden>
+  <div class="folha-fundo" id="det-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="det-titulo" style="gap:10px">
+    <div class="folha-topo">
+      <strong id="det-titulo"><i>Orçamento</i> <span id="det-numero"></span></strong>
+      <button class="fechar" type="button" id="det-fechar" aria-label="Fechar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <p class="ajuda neutra" id="det-sub" style="margin-top:-8px"></p>
+    <div class="grade2">
+      <label class="campo"><span>Cliente</span><span class="caixa texto"><input id="det-cliente" type="text" maxlength="60" autocomplete="off" placeholder="Sem cliente"></span></label>
+      <label class="campo"><span>Peça</span><span class="caixa texto"><input id="det-peca" type="text" maxlength="120" autocomplete="off" placeholder="Sem descrição"></span></label>
+    </div>
+    <div class="linha"><div class="rot"><strong id="det-qtd"></strong><span id="det-mat"></span></div><span class="val" id="det-total" style="font-size:18px;font-weight:800"></span></div>
+    <div class="interno"><span class="tag">Só você vê</span>
+      <div class="linha"><div class="rot"><strong>Custo total</strong></div><span class="val" id="det-custo"></span></div>
+      <div class="linha"><div class="rot"><strong>Lucro</strong></div><span class="val" id="det-lucro" style="font-weight:800"></span></div>
+    </div>
+    <div class="campo"><span>Situação</span>
+      <div class="seg" id="det-seg" role="group" aria-label="Situação">
+        <button type="button" data-st="enviado" aria-pressed="false">Enviado</button>
+        <button type="button" data-st="aprovado" aria-pressed="false">Aprovado</button>
+        <button type="button" data-st="recusado" aria-pressed="false">Recusado</button>
+      </div>
+      <span class="ajuda neutra" id="det-st-info"></span>
+    </div>
+    <p class="nota-antigo" id="det-antigo" hidden>Orçamento anterior à versão 0.4.0: sem os dados da mesa.</p>
+    <div class="grade2">
+      <button class="btn" type="button" id="det-reenviar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg>Reenviar</button>
+      <button class="btn" type="button" id="det-usar">Usar de novo</button>
+    </div>
+    <div class="grade2">
+      <button class="btn mais peq" type="button" id="det-catalogo">Salvar no catálogo</button>
+      <button class="btn mais peq perigo" type="button" id="det-excluir">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAINEL: SALVAR NO CATÁLOGO -->
+<div class="folha" id="folha-cat-salvar" hidden>
+  <div class="folha-fundo" id="cs-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="cs-titulo">
+    <div class="folha-topo"><strong id="cs-titulo">Salvar no catálogo</strong>
+      <button class="fechar" type="button" id="cs-fechar" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <label class="campo"><span>Nome da peça</span><span class="caixa texto"><input id="cs-nome" type="text" maxlength="40" autocomplete="off" placeholder="Ex.: Suporte de celular"></span></label>
+    <label class="campo"><span>Descrição para o cliente (opcional)</span><span class="caixa texto"><input id="cs-desc" type="text" maxlength="120" autocomplete="off" placeholder="Igual ao nome"></span></label>
+    <div class="salvo-box"><span class="tag">O que fica salvo</span><strong id="cs-resumo"></strong><span id="cs-preco"></span></div>
+    <p class="alerta" id="cs-aviso" hidden></p>
+    <button class="btn principal" type="button" id="cs-salvar">Salvar</button>
+  </div>
+</div>
+
+<!-- PAINEL: PEDIDO DE UMA PEÇA DO CATÁLOGO -->
+<div class="folha" id="folha-cat-pedido" hidden>
+  <div class="folha-fundo" id="cp-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="cp-titulo" style="gap:10px">
+    <div class="folha-topo"><strong id="cp-titulo"></strong>
+      <button class="fechar" type="button" id="cp-fechar" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <p class="ajuda neutra" id="cp-sub" style="margin-top:-6px"></p>
+    <p class="alerta" id="cp-alerta" hidden></p>
+    <div class="campo"><span>Quantidade do pedido</span>
+      <div class="stepper">
+        <button type="button" id="cp-menos" aria-label="Menos uma peça">−</button>
+        <label class="caixa"><input id="cp-qtd" type="text" inputmode="numeric" autocomplete="off" aria-label="Quantidade do pedido" value="1"></label>
+        <button type="button" id="cp-mais" aria-label="Mais uma peça">+</button>
+      </div>
+    </div>
+    <div class="chips atalhos-ped" id="cp-atalhos" role="group" aria-label="Quantidades comuns"></div>
+    <div class="linha"><div class="rot"><strong>Total do pedido</strong><span id="cp-ref"></span></div><span class="val" id="cp-total" style="font-size:20px;font-weight:800"></span></div>
+    <button class="btn principal" type="button" id="cp-enviar">Enviar orçamento</button>
+    <div class="grade2">
+      <button class="btn" type="button" id="cp-abrir">Abrir na calculadora</button>
+      <button class="btn" type="button" id="cp-editar">Editar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAINEL: EDITAR PEÇA DO CATÁLOGO -->
+<div class="folha" id="folha-cat-editar" hidden>
+  <div class="folha-fundo" id="ce-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="ce-titulo">
+    <div class="folha-topo"><strong id="ce-titulo">Editar peça</strong>
+      <button class="fechar" type="button" id="ce-fechar" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <label class="campo"><span>Nome da peça</span><span class="caixa texto"><input id="ce-nome" type="text" maxlength="40" autocomplete="off"></span></label>
+    <label class="campo"><span>Descrição para o cliente (opcional)</span><span class="caixa texto"><input id="ce-desc" type="text" maxlength="120" autocomplete="off" placeholder="Igual ao nome"></span></label>
+    <p class="ajuda neutra">Para mudar peso, tempo ou margem, abra a peça na calculadora e salve de novo com o mesmo nome.</p>
+    <p class="alerta" id="ce-aviso" hidden></p>
+    <button class="btn principal" type="button" id="ce-salvar">Salvar</button>
+    <button class="btn mais peq perigo" type="button" id="ce-excluir">Excluir peça</button>
+  </div>
+</div>
+
+<!-- PAINEL: CONFIRMAR EXCLUSÃO -->
+<div class="folha" id="folha-excluir" hidden>
+  <div class="folha-fundo" id="excluir-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="excluir-titulo">
+    <div class="folha-topo"><strong id="excluir-titulo">Excluir este orçamento?</strong></div>
+    <p class="ajuda" id="excluir-txt"></p>
+    <button class="btn principal" type="button" id="excluir-sim" style="background:#A3360A">Excluir</button>
+    <button class="btn" type="button" id="excluir-nao">Cancelar</button>
+  </div>
+</div>
+
+<!-- PAINEL: RESTAURAR BACKUP -->
+<div class="folha" id="folha-restaurar" hidden>
+  <div class="folha-fundo" id="restaurar-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="restaurar-titulo">
+    <div class="folha-topo"><strong id="restaurar-titulo">Restaurar backup</strong>
+      <button class="fechar" type="button" id="restaurar-fechar" aria-label="Fechar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <p class="erro-backup" id="restaurar-erro" role="alert" hidden></p>
+    <div class="arquivo" id="restaurar-arquivo" hidden><span class="doc">JSON</span><p><strong id="restaurar-nome"></strong><span id="restaurar-info"></span></p></div>
+    <ul class="conteudo" id="restaurar-itens" hidden></ul>
+    <div class="interno" id="restaurar-acontece" hidden><span class="tag">O que acontece</span>
+      <span class="ajuda neutra" id="restaurar-explica"></span>
+      <span class="nota-antigo" id="restaurar-aviso" hidden></span>
+    </div>
+    <p class="ajuda neutra" id="restaurar-desfazer" hidden>Dá para desfazer depois em Configurações › Backup.</p>
+    <button class="btn principal" type="button" id="restaurar-sim" hidden>Restaurar</button>
+    <button class="btn" type="button" id="restaurar-nao">Cancelar</button>
+  </div>
+</div>
+
+<!-- PAINEL: DESFAZER A RESTAURAÇÃO -->
+<div class="folha" id="folha-desfazer" hidden>
+  <div class="folha-fundo" id="desfazer-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="desfazer-titulo">
+    <div class="folha-topo"><strong id="desfazer-titulo">Desfazer a restauração?</strong></div>
+    <p class="ajuda neutra">Configurações, logo, catálogo e filamento voltam como estavam antes de restaurar, e os orçamentos que vieram do backup saem do histórico. Os orçamentos que você enviou depois de restaurar continuam.</p>
+    <button class="btn principal" type="button" id="desfazer-sim">Desfazer restauração</button>
+    <button class="btn" type="button" id="desfazer-nao">Cancelar</button>
+  </div>
+</div>
+
+<!-- FAIXA: NOVA VERSÃO PRONTA (posição fixa, não empurra nada) -->
+<div class="faixa-versao" id="faixa-versao" role="status" hidden>
+  <p><strong id="faixa-titulo">Nova versão pronta</strong>O que você digitou continua aqui.</p>
+  <button class="atualizar" type="button" id="faixa-atualizar">Atualizar</button>
+  <button class="fechar" type="button" id="faixa-fechar" aria-label="Agora não">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+</div>
+
+<!-- PAINEL: ATUALIZAR COM ALTERAÇÃO NÃO SALVA EM CONFIGURAÇÕES -->
+<div class="folha" id="folha-atualizar" hidden>
+  <div class="folha-fundo" id="atualizar-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="atualizar-titulo">
+    <div class="folha-topo"><strong id="atualizar-titulo">Há alterações não salvas</strong></div>
+    <p class="ajuda">Salve antes de atualizar, senão o que você mudou em Configurações se perde.</p>
+    <button class="btn principal" type="button" id="atualizar-salvar">Salvar e atualizar</button>
+    <button class="btn" type="button" id="atualizar-cancelar">Cancelar</button>
+  </div>
+</div>
+
+<div class="aviso versao" id="aviso-versao" role="status"><strong id="aviso-versao-titulo"></strong><span id="aviso-versao-detalhe"></span></div>
 <div class="aviso" id="aviso" role="status"></div>
 
 <script src="calc.js"></script>
+<script src="dados.js"></script>
 <script src="orcamento-img.js"></script>
 <script src="app.js"></script>
 </body>

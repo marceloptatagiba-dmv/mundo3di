@@ -34,6 +34,7 @@ Padrões das configurações: PLA a R$ 150,00 o rolo de 1000 g, hora R$ 2,25/h, 
 |---|---|
 | `index.html` | Telas e visual |
 | `calc.js` | Regras de cálculo, leitura de tempo e texto do orçamento |
+| `dados.js` | Registro dos envios, histórico (busca, período, resumo), situação, "usar de novo", catálogo de peças, backup/restauração e planilha (CSV) |
 | `orcamento-img.js` | Desenha o orçamento em imagem (JPG) com logo, em canvas, sem internet; reduz o logo enviado pelo cliente |
 | `app.js` | Funcionamento das telas, configurações salvas, botão copiar, envio do orçamento (texto ou imagem), numeração e registro dos envios |
 | `config-ambiente.js` | Nome do ambiente (produção ou teste), prefixo do cache e chave das configurações salvas |
@@ -75,11 +76,25 @@ O que muda entre os dois fica só em `config-ambiente.js`, `manifest.webmanifest
 
 Depois de instalado, abra uma vez com internet. A partir daí funciona em modo avião.
 
+## Catálogo de peças
+- Link **Catálogo** ao lado de "Dados da peça". Guarda até 100 peças com os dados da mesa (peso, tempo, peças na mesa, extras, margem, filamento ou cores). **O preço não fica congelado:** é recalculado com os custos de hoje e comparado com o último envio.
+- **Salvar:** pela tela do Catálogo ("Salvar o orçamento atual") ou pelo detalhe de um orçamento do Histórico. Nome igual ao de outra peça pergunta antes de substituir.
+- **Pedido:** toque numa peça, escolha a quantidade (peso e tempo ficam proporcionais; o valor por peça é o da mesa) e envie ou abra na calculadora. O orçamento enviado grava a peça (`catalogoId`) e atualiza o último preço.
+- O catálogo entra no backup e na restauração.
+
+## Backup e planilha
+
+Em **Configurações › Backup**:
+- **Fazer backup** gera `backup-orcamento-3di-AAAA-MM-DD.json` (configurações, filamentos, logo, catálogo, orçamentos, contador e filamento atual) e abre o compartilhamento do celular; sem suporte, baixa o arquivo. Só conta como backup feito quando o envio ou o download acontece. O arquivo tem custos e clientes: não enviar para cliente.
+- **Restaurar** pede o arquivo e mostra um resumo antes de aplicar: substitui configurações, logo, catálogo e filamento; junta os orçamentos sem repetir (mesmo nº e mesma data/hora); o próximo número nunca repete. **Desfazer restauração** fica disponível até o próximo backup ou restauração.
+- **Planilha** exporta o histórico inteiro em CSV (`;`, vírgula decimal, UTF-8 com BOM) para Excel/Planilhas. É de uso interno (tem custo e lucro).
+- No **Histórico** aparece uma faixa de lembrete quando há 20 ou mais orçamentos desde o último backup.
+
 ## Atualizar o app
 
 1. Altere os arquivos.
-2. Em `config-ambiente.js` do ambiente, aumente a `versaoCache` (`v2` → `v3`). Sem isso os celulares continuam com a versão antiga.
-3. Publique de novo. Os celulares recebem a atualização na próxima vez que abrirem o app com internet (às vezes é preciso fechar e abrir de novo).
+2. Em `config-ambiente.js` do ambiente, aumente a `versao` no formato **MAJOR.MINOR.PATCH**. Sem isso os celulares continuam com a versão antiga. No staging a versão leva o sufixo `-teste.N` (`0.4.0-teste.1`, `0.4.0-teste.2`…; o N sobe a cada publicação). Na produção vale o mesmo número sem o sufixo (`0.4.0`). MINOR sobe a cada lote do backlog, PATCH a cada correção (regras completas no plano, v4 item 5). O cache offline passa a se chamar `<prefixo>-v<versao>`.
+3. Publique de novo. Os celulares baixam a versão nova em segundo plano. Com o app aberto aparece a faixa **"Versão X pronta · Atualizar"** (nunca recarrega sozinho; os campos digitados voltam depois de atualizar). Se o app foi fechado e aberto, ele já abre na versão nova e mostra uma vez "Atualizado para a X". A versão em uso fica no cabeçalho de **Configurações**.
 
 ## Testar no computador
 
