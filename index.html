@@ -48,6 +48,7 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
 .titulo-secao{margin:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--verde-texto)}
 .grade2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .grade5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.grade4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 
 .campo{display:flex;flex-direction:column;gap:6px}
 .campo[hidden]{display:none}
@@ -119,6 +120,55 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
 .instalar .btn{width:auto;height:40px;padding:0 14px;font-size:14px}
 .fechar{background:none;border:0;width:44px;height:44px;margin:-10px -10px -10px 0;color:var(--suave)}
 
+.rot-linha{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0;height:15px}
+.rot-linha label{font-size:12px;font-weight:600;color:var(--suave);white-space:nowrap}
+.chip-mat{position:relative;display:flex;align-items:center;gap:2px;min-width:0;font-size:12px;font-weight:700;color:var(--verde-texto);padding:10px 2px 10px 6px;margin:-10px -2px -10px 0}
+.chip-mat span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip-mat svg{flex-shrink:0}
+.chip-mat select{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:16px;border:0;cursor:pointer;-webkit-appearance:none;appearance:none}
+.chip-mat:focus-within{outline:2px solid var(--verde);outline-offset:-6px;border-radius:8px}
+.lista-mat{display:flex;flex-direction:column;gap:12px}
+.mat{border:1.5px solid var(--linha);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.mat-topo{display:flex;gap:8px;align-items:center}
+.mat-topo .caixa{flex:1;min-width:0}
+.mat-topo .caixa input{font-size:17px}
+.icone-p{width:44px;height:48px;border-radius:12px;border:1.5px solid var(--borda);background:#fff;display:flex;align-items:center;justify-content:center;padding:0;color:var(--suave);flex-shrink:0}
+.icone-p:disabled{opacity:.35;cursor:default}
+.mat-rodape{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mat-rodape label{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;min-height:32px}
+.mat-rodape input,.marcar input{width:20px;height:20px;accent-color:var(--verde);margin:0;flex-shrink:0}
+.marcar{display:flex;align-items:flex-start;gap:10px;font-size:13px;font-weight:600;line-height:1.4;padding:4px 0}
+.btn.mais{height:46px;font-size:14px;color:var(--verde-texto)}
+.btn.mais[hidden]{display:none}
+.caixa.texto input{font-size:17px;font-weight:600}
+.caixa.texto input::placeholder{font-weight:500}
+.logo-linha{display:flex;gap:12px;align-items:center}
+.logo-linha img{height:64px;width:96px;object-fit:contain;border:1.5px solid var(--linha);border-radius:10px;padding:4px;background:#fff;flex-shrink:0}
+.logo-botoes{display:flex;flex-direction:column;gap:8px;flex:1;min-width:0}
+.cor-linha{display:grid;grid-template-columns:minmax(0,1fr) 110px 40px;gap:8px;align-items:center}
+.cor-linha select{height:48px;min-width:0;border:1.5px solid var(--borda);border-radius:12px;background:var(--campo);padding:0 10px;font-size:16px;font-weight:600}
+.cor-linha .tira{height:48px;border:0;background:transparent;color:var(--suave);font-size:22px}
+.cor-linha .tira[hidden]{visibility:hidden;display:block}
+.caixa.multi input{cursor:pointer}
+.folha{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center}
+.folha[hidden]{display:none}
+.folha-fundo{position:absolute;inset:0;background:rgba(14,15,16,.5)}
+.folha-corpo{position:relative;width:100%;max-width:480px;max-height:92vh;max-height:92dvh;overflow:auto;background:#fff;border-radius:20px 20px 0 0;
+  padding:14px calc(20px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));display:flex;flex-direction:column;gap:12px}
+.folha-topo{display:flex;align-items:center;justify-content:space-between;font-size:17px;font-weight:800}
+.folha-topo span{color:var(--verde-texto)}
+.btn.grande{height:56px;font-size:16px;font-weight:800}
+.btn.grande[aria-pressed="true"]{border-color:var(--verde);background:var(--verde);color:#fff}
+.previa{display:flex;gap:12px;align-items:center;min-height:24px}
+.previa img{height:120px;width:auto;border:1.5px solid var(--linha);border-radius:8px;background:#fff;flex-shrink:0}
+.previa img[hidden]{display:none}
+.bloco{display:flex;flex-direction:column;gap:10px}
+.bloco[hidden]{display:none}
+.resumo-hora{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:12px;background:var(--fundo);border:1.5px solid var(--linha)}
+.resumo-hora strong{font-size:15px;font-weight:800}
+.resumo-hora span{font-size:12px;font-weight:500;color:var(--suave);line-height:1.4}
+.resumo-hora span.alerta{font-weight:700;color:#B45309}
+.resumo-hora span:empty{display:none}
 .aviso{position:fixed;left:50%;top:calc(84px + env(safe-area-inset-top));transform:translateX(-50%) translateY(-20px);background:var(--preto);color:#fff;font-size:14px;font-weight:700;
   padding:12px 18px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10}
 .aviso.ver{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -151,9 +201,12 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
       <section class="cartao" aria-labelledby="t-dados">
         <h2 class="titulo-secao" id="t-dados">Dados da peça</h2>
         <div class="grade2">
-          <label class="campo"><span>Peso da mesa</span>
-            <span class="caixa"><input id="peso" type="text" inputmode="decimal" autocomplete="off" placeholder="0"><small>g</small></span>
-          </label>
+          <div class="campo">
+            <span class="rot-linha"><label for="peso">Peso da mesa</label>
+              <span class="chip-mat"><span id="material-nome">PLA</span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg><select id="material" aria-label="Filamento"></select></span>
+            </span>
+            <label class="caixa"><input id="peso" type="text" inputmode="decimal" autocomplete="off" placeholder="0"><small>g</small></label>
+          </div>
           <label class="campo"><span>Tempo da mesa</span>
             <span class="caixa"><input id="tempo" type="text" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off" placeholder="0"><small>h:min</small></span>
           </label>
@@ -187,12 +240,16 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
         </summary>
         <div class="corpo" aria-label="Detalhamento do cálculo">
           <div class="linha"><div class="rot"><strong>Material</strong><span id="d-material"></span></div><span class="val" id="v-material"></span></div>
-          <div class="linha"><div class="rot"><strong>Impressão</strong><span id="d-impressao"></span></div><span class="val" id="v-impressao"></span></div>
+          <div class="linha" id="r-purga" hidden><div class="rot"><strong>Purga e torre</strong><span id="d-purga"></span></div><span class="val" id="v-purga"></span></div>
+          <div class="linha" id="r-impressao"><div class="rot"><strong>Impressão</strong><span id="d-impressao"></span></div><span class="val" id="v-impressao"></span></div>
+          <div class="linha" id="r-energia" hidden><div class="rot"><strong>Energia</strong><span id="d-energia"></span></div><span class="val" id="v-energia"></span></div>
+          <div class="linha" id="r-desgaste" hidden><div class="rot"><strong>Desgaste da impressora</strong><span id="d-desgaste"></span></div><span class="val" id="v-desgaste"></span></div>
           <div class="divisor"></div>
           <div class="linha forte"><div class="rot"><strong>Custo base</strong></div><span class="val" id="v-base"></span></div>
           <div class="linha suave"><div class="rot"><strong id="r-perda">Perda/Refugo</strong></div><span class="val" id="v-perda"></span></div>
           <div class="linha suave" id="r-extras"><div class="rot"><strong>Extras</strong><span id="d-extras"></span></div><span class="val" id="v-extras"></span></div>
           <div class="linha total"><div class="rot"><strong>Custo total</strong></div><span class="val" id="v-total"></span></div>
+          <div class="linha suave" id="r-arred" hidden><div class="rot"><strong>Arredondamento</strong><span id="d-arred"></span></div><span class="val" id="v-arred"></span></div>
           <p class="nota">Lucro = valor a cobrar − custo total.</p>
         </div>
       </details>
@@ -234,14 +291,62 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
       <p class="intro">Estes valores ficam salvos neste celular e valem para todos os cálculos.</p>
 
       <form class="cartao config" id="form-config" novalidate>
-        <label class="campo"><span>Preço do rolo de 1 kg</span>
-          <span class="caixa"><b>R$</b><input id="cfg-kg" type="text" inputmode="decimal" autocomplete="off"><small>/kg</small></span>
-          <span class="ajuda" id="a-kg"></span>
-        </label>
-        <label class="campo"><span>Valor da hora de impressão</span>
-          <span class="caixa"><b>R$</b><input id="cfg-hora" type="text" inputmode="decimal" autocomplete="off"><small>/h</small></span>
-          <span class="ajuda" id="a-hora"></span>
-        </label>
+        <h2 class="titulo-secao">Filamentos</h2>
+        <div class="lista-mat" id="lista-materiais"></div>
+        <button class="btn mais" type="button" id="add-material">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true" style="vertical-align:-3px;margin-right:6px"><path d="M12 5v14M5 12h14"/></svg>Adicionar filamento
+        </button>
+        <label class="marcar"><input type="checkbox" id="cfg-mostrar-material"><span>Mostrar o filamento no orçamento enviado ao cliente</span></label>
+        <div class="divisor"></div>
+        <h2 class="titulo-secao">Custos</h2>
+        <div class="campo"><span>Custo da hora de impressão</span>
+          <div class="grade2" role="group" aria-label="Como calcular o custo da hora">
+            <button class="atalho" type="button" id="modo-simples" aria-pressed="true">Simples</button>
+            <button class="atalho" type="button" id="modo-detalhado" aria-pressed="false">Detalhado</button>
+          </div>
+        </div>
+        <div class="bloco" id="hora-simples">
+          <label class="campo"><span>Valor da hora de impressão</span>
+            <span class="caixa"><b>R$</b><input id="cfg-hora" type="text" inputmode="decimal" autocomplete="off"><small>/h</small></span>
+            <span class="ajuda" id="a-hora"></span>
+          </label>
+          <span class="ajuda neutra">Cobre manutenção, depreciação e luz da impressora.</span>
+        </div>
+        <div class="bloco" id="hora-detalhado" hidden>
+          <div class="grade2">
+            <label class="campo"><span>Potência média</span>
+              <span class="caixa"><input id="cfg-pot" type="text" inputmode="decimal" autocomplete="off" placeholder="0"><small>W</small></span>
+            </label>
+            <label class="campo"><span>Tarifa de energia</span>
+              <span class="caixa"><b>R$</b><input id="cfg-tarifa" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00"><small>/kWh</small></span>
+            </label>
+          </div>
+          <span class="ajuda neutra">Potência: meça com uma tomada medidora (não use o valor da fonte). Tarifa: total da conta ÷ kWh consumidos, já com impostos e bandeira.</span>
+          <label class="campo"><span>Preço da impressora</span>
+            <span class="caixa"><b>R$</b><input id="cfg-preco-imp" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00"></span>
+          </label>
+          <label class="campo"><span>Valor de revenda</span>
+            <span class="caixa"><b>R$</b><input id="cfg-revenda" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00"></span>
+            <span class="ajuda neutra">Quanto ela valeria no fim da vida útil.</span>
+          </label>
+          <div class="grade2">
+            <label class="campo"><span>Vida útil</span>
+              <span class="caixa"><input id="cfg-vida" type="text" inputmode="numeric" autocomplete="off" placeholder="0"><small>h</small></span>
+            </label>
+            <label class="campo"><span>Impressas por ano</span>
+              <span class="caixa"><input id="cfg-horas-ano" type="text" inputmode="numeric" autocomplete="off" placeholder="0"><small>h/ano</small></span>
+            </label>
+          </div>
+          <label class="campo"><span>Manutenção por ano</span>
+            <span class="caixa"><b>R$</b><input id="cfg-manut" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00"></span>
+            <span class="ajuda neutra">Bico, correia, lubrificação, peças de troca.</span>
+          </label>
+          <div class="resumo-hora" aria-live="polite">
+            <strong id="a-det-total"></strong>
+            <span id="a-det-partes"></span>
+            <span id="a-det-comparar"></span>
+          </div>
+        </div>
         <label class="campo"><span>Perda/Refugo</span>
           <span class="caixa"><input id="cfg-perda" type="text" inputmode="decimal" autocomplete="off"><small>%</small></span>
           <span class="ajuda neutra">Acrescentado ao custo base para chegar ao custo total</span>
@@ -249,6 +354,59 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
         <label class="campo"><span>Preço mínimo por pedido</span>
           <span class="caixa"><b>R$</b><input id="cfg-minimo" type="text" inputmode="decimal" autocomplete="off"></span>
           <span class="ajuda neutra">Nenhum orçamento sai abaixo disso. Deixe 0,00 para desligar.</span>
+        </label>
+        <div class="campo"><span>Arredondamento do valor por peça</span>
+          <div class="grade4" role="group" aria-label="Arredondamento do valor por peça">
+            <button class="atalho" type="button" data-arr="exato" aria-pressed="true">Exato</button>
+            <button class="atalho" type="button" data-arr="50" aria-pressed="false">,50</button>
+            <button class="atalho" type="button" data-arr="90" aria-pressed="false">,90</button>
+            <button class="atalho" type="button" data-arr="inteiro" aria-pressed="false">Inteiro</button>
+          </div>
+          <span class="ajuda neutra" id="a-arred"></span>
+        </div>
+        <div class="divisor"></div>
+        <h2 class="titulo-secao">Meu negócio</h2>
+        <p class="ajuda neutra">Aparece na imagem do orçamento. Tudo é opcional.</p>
+        <div class="campo"><span>Logo</span>
+          <div class="logo-linha">
+            <img id="cfg-logo-prev" src="img/logo-3di.png" alt="Logo do orçamento">
+            <div class="logo-botoes">
+              <button class="btn mais" type="button" id="cfg-logo-escolher">Escolher logo</button>
+              <button class="btn mais" type="button" id="cfg-logo-remover" hidden>Remover logo</button>
+            </div>
+          </div>
+          <input type="file" id="cfg-logo-arq" accept="image/*" hidden>
+          <span class="ajuda neutra" id="a-logo"></span>
+        </div>
+        <label class="campo"><span>Nome do negócio</span>
+          <span class="caixa texto"><input id="neg-nome" type="text" maxlength="40" autocomplete="off" placeholder="Mundo 3DI"></span>
+        </label>
+        <label class="campo"><span>WhatsApp</span>
+          <span class="caixa texto"><input id="neg-whatsapp" type="tel" maxlength="20" autocomplete="off" placeholder="(00) 00000-0000"></span>
+        </label>
+        <label class="campo"><span>Instagram ou site</span>
+          <span class="caixa texto"><input id="neg-instagram" type="text" maxlength="40" autocomplete="off" autocapitalize="off" placeholder="@seunegocio"></span>
+        </label>
+        <div class="grade2">
+          <label class="campo"><span>Cidade</span>
+            <span class="caixa texto"><input id="neg-cidade" type="text" maxlength="40" autocomplete="off"></span>
+          </label>
+          <label class="campo"><span>CNPJ</span>
+            <span class="caixa texto"><input id="neg-cnpj" type="text" inputmode="numeric" maxlength="18" autocomplete="off"></span>
+          </label>
+        </div>
+        <label class="campo"><span>Validade do orçamento</span>
+          <span class="caixa"><input id="neg-validade" type="text" inputmode="numeric" autocomplete="off"><small>dias</small></span>
+          <span class="ajuda neutra">Deixe 0 para não mostrar a validade.</span>
+        </label>
+        <label class="campo"><span>Prazo de entrega padrão</span>
+          <span class="caixa texto"><input id="neg-prazo" type="text" maxlength="40" autocomplete="off" placeholder="Ex.: 5 dias úteis"></span>
+        </label>
+        <label class="campo"><span>Formas de pagamento</span>
+          <span class="caixa texto"><input id="neg-pagamento" type="text" maxlength="80" autocomplete="off" placeholder="Ex.: Pix ou cartão em até 3x"></span>
+        </label>
+        <label class="campo"><span>Observação padrão</span>
+          <span class="caixa texto"><input id="neg-obs" type="text" maxlength="160" autocomplete="off" placeholder="Ex.: 50% na aprovação, 50% na entrega"></span>
         </label>
       </form>
 
@@ -259,9 +417,61 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
   </section>
 
 </div>
+<!-- PAINEL: ENVIAR ORÇAMENTO (texto ou imagem) -->
+<div class="folha" id="folha-cores" hidden>
+  <div class="folha-fundo" id="cores-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="cores-titulo">
+    <div class="folha-topo">
+      <strong id="cores-titulo">Peça multicor</strong>
+      <button class="fechar" type="button" id="cores-fechar" aria-label="Fechar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="bloco" id="cores-lista"></div>
+    <button class="btn mais" type="button" id="cores-mais">+ Adicionar cor</button>
+    <label class="campo"><span>Purga + torre (g) — copie do fatiador</span>
+      <span class="caixa"><input id="purga" type="text" inputmode="decimal" autocomplete="off" placeholder="0"><small>g</small></span>
+    </label>
+    <button class="btn principal" type="button" id="cores-pronto">Pronto</button>
+  </div>
+</div>
+
+<div class="folha" id="folha" hidden>
+  <div class="folha-fundo" id="folha-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="folha-titulo">
+    <div class="folha-topo">
+      <strong id="folha-titulo">Enviar orçamento <span id="folha-numero"></span></strong>
+      <button class="fechar" type="button" id="folha-fechar" aria-label="Fechar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="grade2">
+      <button class="btn grande" type="button" id="enviar-texto">Texto</button>
+      <button class="btn grande" type="button" id="abrir-imagem" aria-pressed="false">Imagem</button>
+    </div>
+    <div class="bloco" id="painel-imagem" hidden>
+      <label class="campo"><span>Nome do cliente (opcional)</span>
+        <span class="caixa texto"><input id="img-cliente" type="text" maxlength="60" autocomplete="off"></span>
+      </label>
+      <label class="campo"><span>Descrição da peça (opcional)</span>
+        <span class="caixa texto"><input id="img-descricao" type="text" maxlength="120" autocomplete="off" placeholder="Peça impressa em 3D"></span>
+      </label>
+      <label class="campo"><span>Prazo de entrega</span>
+        <span class="caixa texto"><input id="img-prazo" type="text" maxlength="40" autocomplete="off"></span>
+      </label>
+      <div class="previa">
+        <img id="img-previa" alt="Pré-visualização do orçamento" hidden>
+        <span class="ajuda neutra" id="img-estado">Preparando a imagem…</span>
+      </div>
+      <button class="btn principal" type="button" id="enviar-imagem" disabled>Enviar imagem</button>
+    </div>
+  </div>
+</div>
+
 <div class="aviso" id="aviso" role="status"></div>
 
 <script src="calc.js"></script>
+<script src="orcamento-img.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

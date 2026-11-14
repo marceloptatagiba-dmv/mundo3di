@@ -6,8 +6,8 @@ App web instalável (PWA) para montar e enviar orçamentos de peças impressas e
 
 | Etapa | Fórmula |
 |---|---|
-| Material | peso (g) × preço do rolo (R$/kg) ÷ 1000 |
-| Impressão | tempo (min) × valor da hora (R$/h) ÷ 60 — o tempo aceita `2h35`, `2:35`, `2h` ou só minutos (`155`) |
+| Material | peso (g) × preço do rolo ÷ peso do rolo (g) — do filamento escolhido na tela (PLA, PETG, TPU…) |
+| Impressão | tempo (min) × valor da hora (R$/h) ÷ 60 — o tempo aceita `2h35`, `2:35`, `2h` ou só minutos (`155`). No modo **Detalhado** do custo da hora, vira **Energia** + **Desgaste da impressora** (veja abaixo) |
 | Custo base | Material + Impressão |
 | Perda/Refugo | Custo base × perda % (padrão 5%) |
 | Extras | extras por peça × quantidade de peças (embalagem, acabamento, insumos, frete; sem perda) |
@@ -15,10 +15,18 @@ App web instalável (PWA) para montar e enviar orçamentos de peças impressas e
 | Valor a cobrar | Custo total × (1 + margem %) — padrão 100%. Nunca fica abaixo do **preço mínimo por pedido** (0 = desligado) |
 | Lucro | Valor a cobrar − Custo total |
 | Valor por peça | Valor a cobrar ÷ peças na mesa |
+| Peças multicor (AMS) | No filamento da tela principal, escolha **Multicor (AMS)**: abre a folha de cores (filamento + gramas de cada cor, até 8) e o campo **Purga + torre (g)**, copiado do fatiador. A purga é cobrada pelo preço médio ponderado das cores (ex.: 30 g de R$ 150/kg + 10 g de R$ 120/kg → R$ 0,1425/g; 8 g de purga = R$ 1,14; material total R$ 6,84). Fica só na memória (não grava). O orçamento ao cliente mostra só os nomes (ex.: "PLA + PETG (multicor)"), sem custo |
+| Arredondamento (opcional) | Em Configurações: **Exato** (padrão), **,50**, **,90** ou **Inteiro**. Sempre para cima, no valor por peça (total = peças × valor arredondado). Ordem: cálculo → preço mínimo → arredondamento; com o preço mínimo aplicado não arredonda. Ex.: R$ 2,36 vira R$ 2,50 (,50), R$ 2,90 (,90) ou R$ 3,00 (inteiro); R$ 2,91 em ,90 vira R$ 3,90. O lucro usa o valor arredondado e o "Ver cálculo" mostra a linha "Arredondamento" |
 
 Peso e tempo são os da **mesa inteira** (como o fatiador informa); "Peças na mesa" divide o valor para dar o preço de cada peça. O botão **Enviar orçamento** abre o compartilhamento do celular (WhatsApp etc.) com um texto pronto, sem mostrar custo nem margem.
 
-Padrões das configurações: rolo R$ 150,00/kg, hora R$ 2,25/h, perda 5%, preço mínimo R$ 0,00. Cada celular guarda as próprias configurações.
+**Filamentos:** em Configurações há uma lista de filamentos (nome, preço do rolo e peso do rolo — padrão 1000 g). Um deles é o padrão; na tela de orçamento o seletor ao lado de "Peso da mesa" troca o filamento, e o app lembra o último usado. Quem vinha da v2 ganha o filamento "PLA" com o preço do rolo que já estava salvo. O nome do filamento só aparece no orçamento enviado se a opção "Mostrar o filamento no orçamento" estiver ligada (vem desligada). "Restaurar padrões" volta hora, perda, preço mínimo e arredondamento (Exato), sem mexer na lista de filamentos, na impressora nem nos dados do negócio.
+
+**Custo da hora (Simples ou Detalhado):** em Configurações > Custos, o **Simples** é o campo único de sempre (R$ 2,25/h, que já cobre manutenção, depreciação e luz). O **Detalhado** separa energia e desgaste: potência média (W, medida com tomada medidora), tarifa (R$/kWh = total da conta ÷ kWh, com impostos e bandeira), preço da impressora, valor de revenda, vida útil (h), manutenção por ano (R$) e horas impressas por ano. Energia/h = potência ÷ 1000 × tarifa. Desgaste/h = (preço − revenda) ÷ vida útil + manutenção por ano ÷ horas por ano. Hora = energia + desgaste. O app mostra o valor por hora ao vivo e avisa se ficar abaixo do valor do modo Simples. Alternar o modo não apaga nenhum campo, e o modo escolhido vale para todos os orçamentos. No "Ver cálculo", a linha "Impressão" vira "Energia" e "Desgaste da impressora". "Restaurar padrões" não mexe no modo nem nos dados da impressora.
+
+**Orçamento em imagem e numeração:** o botão **Enviar orçamento** abre um painel com **Texto** (envio na hora) e **Imagem**. A imagem é um JPG de 1080 px com logo, dados do negócio, nº do orçamento, data, validade, cliente, descrição da peça, material (só se a opção estiver ligada), quantidade, valor por peça, total, prazo, pagamento e observações. **Nunca mostra custo, margem, perda nem lucro.** Cliente, descrição e prazo são opcionais (o prazo já vem do padrão). Em Configurações > **Meu negócio** ficam logo (reduzido a 400 px no próprio aparelho; sem logo, usa o logo 3Di), nome, WhatsApp, Instagram/site, cidade, CNPJ (opcional), validade (padrão 7 dias; 0 não mostra), prazo, formas de pagamento e observação padrão. A imagem é enviada pelo compartilhamento do celular (Android/Chrome e iPhone com iOS 15 ou mais); sem esse recurso, o JPG é baixado. Funciona sem internet. O número é sequencial **por aparelho** (Nº 0001, 0002…), aparece também no texto do WhatsApp e só avança quando o envio acontece (cancelar o compartilhamento não gasta número). Cada envio grava um **registro local com data e hora** (formato, quantidade, valor por peça, total, custo total e lucro — uso interno, nunca enviados — material, cliente e descrição). Os registros ficam só no aparelho: trocar de celular ou limpar os dados do navegador apaga tudo (guarda os últimos 2.000).
+
+Padrões das configurações: PLA a R$ 150,00 o rolo de 1000 g, hora R$ 2,25/h, perda 5%, preço mínimo R$ 0,00. Cada celular guarda as próprias configurações.
 
 ## Arquivos
 
@@ -26,7 +34,8 @@ Padrões das configurações: rolo R$ 150,00/kg, hora R$ 2,25/h, perda 5%, preç
 |---|---|
 | `index.html` | Telas e visual |
 | `calc.js` | Regras de cálculo, leitura de tempo e texto do orçamento |
-| `app.js` | Funcionamento das telas, configurações salvas, botão copiar, envio do orçamento |
+| `orcamento-img.js` | Desenha o orçamento em imagem (JPG) com logo, em canvas, sem internet; reduz o logo enviado pelo cliente |
+| `app.js` | Funcionamento das telas, configurações salvas, botão copiar, envio do orçamento (texto ou imagem), numeração e registro dos envios |
 | `config-ambiente.js` | Nome do ambiente (produção ou teste), prefixo do cache e chave das configurações salvas |
 | `manifest.webmanifest` | Nome, ícone e cores do app instalado |
 | `sw.js` | Guarda os arquivos no celular para funcionar offline |
