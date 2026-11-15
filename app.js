@@ -922,7 +922,10 @@
 
   /* ---------- Histórico de orçamentos ---------- */
   var LEMBRETE_BACKUP_ATIVO = true;    // faixa de lembrete de backup no topo do histórico (20 ou mais orçamentos desde o último backup)
-  var histPeriodo = '30', histBusca = '', histLimite = 50, histTimerBusca;
+  var histPeriodo = '30', histSituacao = '', histBusca = '', histLimite = 50, histTimerBusca;
+  var CHAVE_PERIODO = CHAVE + '-periodo';          // período escolhido (vale para a Lista e para o painel de vendas)
+  try { var perSalvo = localStorage.getItem(CHAVE_PERIODO); if (['hoje', '7', '30', 'mes', 'tudo'].indexOf(perSalvo) !== -1) histPeriodo = perSalvo; } catch (e) {}
+  var ROTULO_SIT = { enviado: 'Enviado', vencido: 'Vencido', aprovado: 'Aprovado', recusado: 'Recusado' };
   var detChave = null;                 // orçamento aberto no detalhe
 
   function el(tag, cls, txt) {
@@ -933,14 +936,31 @@
   }
   function desenharHist() {
     var todos = lerLista(), hoje = new Date();
-    var lista = D.filtrarRegistros(todos, { periodo: histPeriodo, busca: histBusca, hoje: hoje });
+    var espera = histSituacao === 'enviado' || histSituacao === 'vencido';   // fila de quem aguarda resposta: sem período, do mais antigo para o mais novo
+    var lista = D.filtrarRegistros(todos, { periodo: histPeriodo, situacao: histSituacao, busca: histBusca, hoje: hoje });
     var res = D.resumir(lista);
     $('hist-n').textContent = String(res.qtd);
     $('hist-total').textContent = moeda(res.total);
-    $('hist-apr').textContent = String(res.aprovados);
+    var apr = D.aprovadosDoPeriodo(todos, { periodo: histPeriodo, busca: histBusca, hoje: hoje });   // aprovados pela data da aprovação (a mesma regra do painel de vendas)
+    $('hist-apr').textContent = String(apr.aprovados);
+    $('hist-apr-valor').textContent = moeda(apr.totalAprovados);
     Array.prototype.forEach.call(document.querySelectorAll('[data-per]'), function (b) {
       b.setAttribute('aria-pressed', String(b.dataset.per === histPeriodo));
     });
+    var cont = D.contarSituacoes(todos, hoje);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-sit]'), function (b) {
+      var st = b.dataset.sit;
+      b.setAttribute('aria-pressed', String(st === histSituacao));
+      b.textContent = ROTULO_SIT[st] + (cont[st] ? ' ' + cont[st] : '');
+    });
+    $('hist-per').hidden = espera;
+    $('hist-resumo').hidden = !!histSituacao;
+    var resSit = $('hist-sit-resumo');
+    resSit.hidden = !histSituacao;
+    if (histSituacao) {
+      var ordem = espera ? ' · mais antigos primeiro' : '';
+      resSit.textContent = res.qtd + (res.qtd === 1 ? ' orçamento' : ' orçamentos') + ' · ' + moeda(res.total) + ordem;
+    }
     var ultimoBackup = lerEstadoBackup();
     var lemb = LEMBRETE_BACKUP_ATIVO ? D.precisaLembreteBackup(todos, ultimoBackup) : { mostrar: false, qtd: 0 };
     $('hist-lembrete').hidden = !lemb.mostrar;
@@ -951,10 +971,15 @@
     if (!lista.length) {
       vazio.hidden = false;
       vazio.textContent = !todos.length ? 'Nenhum orçamento enviado ainda. Cada envio, em texto ou imagem, aparece aqui.'
-        : histBusca ? 'Nada encontrado para “' + histBusca + '”.' : 'Nenhum orçamento neste período. Toque em Tudo para ver todos.';
+        : histBusca ? 'Nada encontrado para “' + histBusca + '”.'
+        : histSituacao === 'enviado' ? 'Nenhum orçamento aguardando resposta.'
+        : histSituacao === 'vencido' ? 'Nenhum orçamento vencido.'
+        : histSituacao ? 'Nenhum orçamento ' + (histSituacao === 'aprovado' ? 'aprovado' : 'recusado') + ' neste período. Toque em Tudo para ver todos.'
+        : 'Nenhum orçamento neste período. Toque em Tudo para ver todos.';
     } else { vazio.hidden = true; }
-    D.agruparPorDia(lista.slice(0, histLimite), hoje).forEach(function (g) {
-      box.appendChild(el('div', 'dia', g.rotulo));
+    var grupos = espera ? [{ rotulo: '', itens: lista.slice(0, histLimite) }] : D.agruparPorDia(lista.slice(0, histLimite), hoje);
+    grupos.forEach(function (g) {
+      if (g.rotulo) box.appendChild(el('div', 'dia', g.rotulo));
       var bloco = el('div', 'lista-hist');
       g.itens.forEach(function (r) {
         var it = el('button', 'item'); it.type = 'button';
@@ -964,8 +989,13 @@
         meio.appendChild(el('span', 'peca', D.descricaoLinha(r)));
         var dir = el('span', 'dir');
         dir.appendChild(el('b', '', moeda(r.total)));
-        var st = D.situacao(r, hoje);
-        dir.appendChild(el('span', 'pill ' + st, D.ROTULOS_SITUACAO[st]));
+        if (espera) {
+          var te = D.textoEspera(r, hoje);
+          dir.appendChild(el('span', 'pill ' + (te.antigo ? 'vencido' : 'enviado'), te.texto));
+        } else {
+          var st = D.situacao(r, hoje);
+          dir.appendChild(el('span', 'pill ' + st, D.ROTULOS_SITUACAO[st]));
+        }
         it.appendChild(meio); it.appendChild(dir);
         it.addEventListener('click', function () { abrirDetalhe(r); });
         bloco.appendChild(it);
@@ -978,8 +1008,20 @@
     clearTimeout(histTimerBusca);
     histTimerBusca = setTimeout(function () { histBusca = $('hist-busca').value.trim(); histLimite = 50; desenharHist(); }, 150);
   });
+  /* O período vale para a Lista e para o painel de vendas (e fica lembrado). */
+  function mudarPeriodo(p) {
+    histPeriodo = p; histLimite = 50;
+    try { localStorage.setItem(CHAVE_PERIODO, p); } catch (e) {}
+    if (!$('tela-vendas').hidden) desenharVendas(); else desenharHist();
+  }
   Array.prototype.forEach.call(document.querySelectorAll('[data-per]'), function (b) {
-    b.addEventListener('click', function () { histPeriodo = b.dataset.per; histLimite = 50; desenharHist(); });
+    b.addEventListener('click', function () { mudarPeriodo(b.dataset.per); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-perv]'), function (b) {
+    b.addEventListener('click', function () { mudarPeriodo(b.dataset.perv); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-sit]'), function (b) {
+    b.addEventListener('click', function () { histSituacao = histSituacao === b.dataset.sit ? '' : b.dataset.sit; histLimite = 50; desenharHist(); });
   });
   $('hist-mais').addEventListener('click', function () { histLimite += 50; desenharHist(); });
 
@@ -1350,16 +1392,122 @@
     if (!$('folha-cat-editar').hidden) fecharEditar(); else if (!$('folha-cat-salvar').hidden) fecharSalvar(); else if (!$('folha-cat-pedido').hidden) fecharPedido();
   });
 
+  /* ---------- Painel de vendas (v5) ---------- */
+  var vTop = 'clientes';                       // Mais vendidos: 'clientes' | 'pecas'
+  var ROTULO_PERIODO = { hoje: 'Hoje', '7': '7 dias', '30': '30 dias', mes: 'Este mês', tudo: 'Tudo' };
+  var ROTULO_ANTERIOR = { '7': 'os 7 dias anteriores', '30': 'os 30 dias anteriores', mes: 'o mesmo período do mês passado' };
+  var origemHist = '';                         // 'vendas' = o Histórico foi aberto pelo painel (o voltar da tela volta ao painel)
+  function pct(n) { return String(n).replace('.', ',') + '%'; }
+  function rotuloEixo(v) { return /^\d{4}-\d{2}-\d{2}$/.test(v.chave) ? v.chave.slice(8) + '/' + v.chave.slice(5, 7) : v.rotulo; }
+
+  function desenharGrafico(serie) {
+    var box = $('v-barras'), eixo = $('v-eixo'), info = $('v-graf-info');
+    box.textContent = ''; eixo.textContent = '';
+    var max = 0, ultimo = 0;
+    serie.forEach(function (v, i) { if (v.valor > max) max = v.valor; if (v.qtd) ultimo = i; });
+    function texto(v) { return v.rotulo + ' · ' + (v.qtd ? moeda(v.valor) + ' (' + v.qtd + (v.qtd === 1 ? ' venda' : ' vendas') + ')' : 'sem vendas'); }
+    function marcar(i) {
+      Array.prototype.forEach.call(box.children, function (b, k) { b.setAttribute('aria-pressed', String(k === i)); });
+      info.textContent = texto(serie[i]);
+    }
+    serie.forEach(function (v, i) {
+      var b = el('button', 'barra'); b.type = 'button';
+      b.setAttribute('aria-label', texto(v)); b.setAttribute('aria-pressed', 'false');
+      var col = el('span', v.valor > 0 ? 'col' : 'col zero');
+      col.style.height = v.valor > 0 ? Math.max(4, Math.round(v.valor / max * 110)) + 'px' : '3px';
+      b.appendChild(col);
+      b.addEventListener('click', function () { marcar(i); });
+      box.appendChild(b);
+    });
+    var n = serie.length;
+    (n <= 7 ? serie.map(function (v, i) { return i; }) : [0, Math.floor((n - 1) / 2), n - 1]).forEach(function (i) { eixo.appendChild(el('span', '', rotuloEixo(serie[i]))); });
+    if (n) marcar(ultimo);
+    $('v-graf-rot').textContent = serie.length && /^\d{4}-\d{2}$/.test(serie[0].chave) ? 'Vendas por mês' : 'Vendas por dia';
+  }
+
+  function desenharTop(r) {
+    var itens = vTop === 'clientes' ? r.topClientes : r.topPecas, box = $('v-top-lista'), max = itens.length ? itens[0].valor : 0;
+    box.textContent = '';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-top]'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.top === vTop)); });
+    itens.forEach(function (it) {
+      var linha = el('div', 'v-rank'), l1 = el('div', 'l1'), nome = el('span', '', it.nome);
+      nome.appendChild(el('i', '', ' · ' + it.qtd + (it.qtd === 1 ? ' venda' : ' vendas')));
+      l1.appendChild(nome); l1.appendChild(el('b', '', moeda(it.valor)));
+      var trilho = el('div', 'trilho'), barra = el('div'); barra.style.width = (max > 0 ? Math.max(2, Math.round(it.valor / max * 100)) : 0) + '%';
+      trilho.appendChild(barra); linha.appendChild(l1); linha.appendChild(trilho); box.appendChild(linha);
+    });
+  }
+
+  function linhaFila(idBtn, idValor, idQtd, f) {
+    $(idValor).textContent = moeda(f.total);
+    $(idQtd).textContent = f.qtd === 1 ? '1 orçamento' : f.qtd + ' orçamentos';
+    $(idBtn).disabled = !f.qtd;
+  }
+
+  var ultimoPainel = null;
+  function desenharVendas() {
+    var r = D.resumoVendas(lerLista(), histPeriodo, new Date());
+    ultimoPainel = r;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-perv]'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.perv === r.periodo)); });
+    var tem = r.qtd > 0, per = ROTULO_PERIODO[r.periodo];
+    $('v-rot').textContent = 'Vendas aprovadas · ' + per;
+    $('v-valor').textContent = moeda(r.vendas);
+    var dv = $('v-delta');
+    if (tem && r.variacao !== null) {
+      var n = Math.round(Math.abs(r.variacao)), base = ROTULO_ANTERIOR[r.periodo];
+      dv.className = 'v-delta' + (n === 0 ? ' igual' : r.variacao < 0 ? ' baixo' : '');
+      dv.textContent = n === 0 ? 'igual ' + base.replace(/^os /, 'aos ').replace(/^o /, 'ao ') : (r.variacao < 0 ? '↓ ' : '↑ ') + n + '% ' + (r.variacao < 0 ? 'abaixo d' : 'sobre ') + base;
+      dv.hidden = false;
+    } else dv.hidden = true;
+    $('v-stats').hidden = !tem;
+    $('v-qtd').textContent = String(r.qtd);
+    $('v-ticket').textContent = moeda(r.ticket);
+    $('v-vazio').hidden = tem; $('v-vazio-btn').hidden = tem;
+    if (!tem) $('v-vazio').textContent = 'Nenhuma venda aprovada ' + (r.periodo === 'hoje' ? 'hoje' : r.periodo === 'tudo' ? 'ainda' : r.periodo === 'mes' ? 'neste mês' : 'nos últimos ' + per) + '. Quando um cliente aceitar, abra o orçamento no histórico e toque em Aprovado: ele entra aqui.';
+    var antigos = r.aguardando.antigos;
+    $('v-ag-sub').textContent = !r.aguardando.qtd ? 'nenhum no momento' : antigos ? antigos + ' há ' + D.DIAS_ANTIGO + ' dias ou mais' : 'nenhum há ' + D.DIAS_ANTIGO + ' dias ou mais';
+    linhaFila('v-ag', 'v-ag-valor', 'v-ag-qtd', r.aguardando);
+    linhaFila('v-ve', 'v-ve-valor', 'v-ve-qtd', r.vencidos);
+
+    $('v-lucro').hidden = !tem; $('v-top').hidden = !tem;
+    $('v-grafico').hidden = !tem || r.periodo === 'hoje';      // em Hoje um dia só não forma gráfico
+    if (!tem) return;
+    $('v-lucro-valor').textContent = moeda(r.lucro);
+    $('v-lucro-pct').textContent = pct(r.margemReal) + ' do valor';
+    $('v-barra-lucro').style.width = Math.max(0, Math.min(100, r.margemReal)) + '%';
+    $('v-leg-lucro').textContent = 'Lucro ' + moeda(r.lucro);
+    $('v-leg-custo').textContent = 'Custo ' + moeda(r.custo);
+    if (r.periodo !== 'hoje') desenharGrafico(r.porDia);
+    desenharTop(r);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-top]'), function (b) {
+    b.addEventListener('click', function () { vTop = b.dataset.top; if (ultimoPainel) desenharTop(ultimoPainel); });
+  });
+  function abrirFila(sit) { histSituacao = sit; origemHist = 'vendas'; histLimite = 50; $('hist-busca').value = ''; histBusca = ''; trocarAba('historico'); }
+  $('v-ag').addEventListener('click', function () { abrirFila('enviado'); });
+  $('v-ve').addEventListener('click', function () { abrirFila('vencido'); });
+  $('v-vazio-btn').addEventListener('click', function () { origemHist = ''; histSituacao = ''; trocarAba('historico'); });
+  $('hist-ver-painel').addEventListener('click', function () { trocarAba('vendas'); });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-aba]'), function (b) {
+    b.addEventListener('click', function () {
+      if (b.dataset.aba === 'vendas') trocarAba('vendas'); else { origemHist = ''; histSituacao = ''; trocarAba('historico'); }
+    });
+  });
+
   /* ---------- Navegação (o botão voltar do Android funciona) ---------- */
-  function telaDaRota() { return location.hash === '#config' ? 'config' : location.hash === '#historico' ? 'hist' : location.hash === '#catalogo' ? 'cat' : 'calc'; }
+  function telaDaRota() { return location.hash === '#config' ? 'config' : location.hash === '#historico' ? 'hist' : location.hash === '#vendas' ? 'vendas' : location.hash === '#catalogo' ? 'cat' : 'calc'; }
+  /* Troca entre Lista e Vendas (e vai da fila do painel ao Histórico) sem empilhar tela: o voltar do Android continua levando à calculadora. */
+  function trocarAba(destino) { history.replaceState(null, '', location.pathname + location.search + '#' + destino); rota(); }
   function mostrar(tela) {
     $('tela-calc').hidden = tela !== 'calc';
     $('tela-config').hidden = tela !== 'config';
     $('tela-hist').hidden = tela !== 'hist';
+    $('tela-vendas').hidden = tela !== 'vendas';
     $('tela-cat').hidden = tela !== 'cat';
     if (tela === 'config') { preencherConfig(config); configInicial = JSON.stringify(lerConfigTela()); desenharBackup(); }
     else fecharPaineisBackup();
     if (tela === 'hist') desenharHist(); else fecharSheetsHist();
+    if (tela === 'vendas') desenharVendas();
     if (tela === 'cat') { $('cat-busca').value = ''; desenharCat(); } else fecharPaineisCat();
     desenharVersao();
     window.scrollTo(0, 0);
@@ -1376,9 +1524,12 @@
     else { history.replaceState(null, '', location.pathname + location.search); rota(); }
   }
   $('ir-config').addEventListener('click', function () { veioDaCalc = true; location.hash = 'config'; });
-  $('ir-hist').addEventListener('click', function () { veioDaCalc = true; location.hash = 'historico'; });
+  $('ir-hist').addEventListener('click', function () { veioDaCalc = true; histSituacao = ''; origemHist = ''; location.hash = 'historico'; });
   $('voltar').addEventListener('click', sairConfig);
-  $('hist-voltar').addEventListener('click', sairConfig);
+  $('hist-voltar').addEventListener('click', function () {
+    if (origemHist === 'vendas') { origemHist = ''; histSituacao = ''; trocarAba('vendas'); } else sairConfig();   // aberto pela fila do painel: volta ao painel
+  });
+  $('vendas-voltar').addEventListener('click', sairConfig);
   $('cat-voltar').addEventListener('click', sairConfig);
   $('cat-abrir').addEventListener('click', function () { veioDaCalc = true; location.hash = 'catalogo'; });
 
@@ -1413,7 +1564,7 @@
 
   /* ---------- Versão e aviso de nova versão ---------- */
   /* Novidades por MAJOR.MINOR (o sufixo -teste.N do staging é ignorado na busca). */
-  var NOVIDADES = { '0.4': 'histórico, backup e catálogo' };
+  var NOVIDADES = { '0.4': 'histórico, backup e catálogo', '0.5': 'painel de vendas' };
   var CHAVE_VISTA = CHAVE + '-versao-vista';
   var CHAVE_RETOMAR = CHAVE + '-retomar';
   var versaoEmUso = C.lerVersao(AMB.versao) ? AMB.versao : '';   // lida de config-ambiente.js (a que esta tela carregou)
