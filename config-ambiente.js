@@ -10,7 +10,7 @@
   root.AMBIENTE_3DI = {
     nome: 'producao',
     prefixoCache: 'calc3di',
-    versao: '0.5.1',
+    versao: '0.5.2',
     chaveConfig: 'mundo3di-calculadora-config',
     extraCache: []
   };
