@@ -40,6 +40,9 @@
     return null;
   }
   var config = carregarConfig();
+  /* Configuração antiga com "Formas de pagamento" em texto: a conversão para chips (e o resto levado para a observação) é gravada
+     na hora, junto com o aviso para conferir em Meu negócio (0.6.0-teste.14) */
+  if (config.negocio.migrouPagamento) { delete config.negocio.migrouPagamento; salvarConfig(config); }
 
   /* Último filamento usado na tela de orçamento (se foi excluído, volta para o padrão) */
   var CHAVE_MAT = CHAVE + '-material';
@@ -246,12 +249,20 @@
   ePeso.addEventListener('click', function () { if (multicorAtivo) abrirCores(); });
   document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !folhaCores.hidden) fecharCores(); });
 
-  $('limpar').addEventListener('click', function () {
-    outraAberta = false; exato = {}; vinculo = null;
+  function limparMesa() {
+    outraAberta = false; exato = {}; vinculo = null; pedidoVinculo = null;
     purgaTxt = ''; cores.forEach(function (c) { c.g = ''; });
     ePeso.value = ''; eTempo.value = ''; eQtd.value = '1'; eExtras.value = ''; eMargem.value = String(C.PADROES.margemPct);
-    atualizar(); ePeso.focus();
-  });
+    atualizar(); desenharVinculoPedido();
+  }
+  $('limpar').addEventListener('click', function () { limparMesa(); ePeso.focus(); });
+  /* Pedido sendo orçado: título "Orçar pedido" e o selo com o cliente (o × desfaz o vínculo: o envio cria um registro novo) */
+  function desenharVinculoPedido() {
+    $('calc-titulo').textContent = pedidoVinculo ? 'Orçar pedido' : 'Novo orçamento';
+    $('calc-sub').hidden = !pedidoVinculo;
+    $('calc-sub-txt').textContent = pedidoVinculo ? 'Pedido de ' + (pedidoVinculo.cliente || 'cliente sem nome') : '';
+  }
+  $('pedido-desvincular').addEventListener('click', function () { pedidoVinculo = null; desenharVinculoPedido(); });
 
   /* ---------- Copiar valor ---------- */
   function copiarTexto(txt) {
@@ -290,7 +301,7 @@
     try { return D.lerRegistros(JSON.parse(localStorage.getItem(CHAVE_REG) || '[]')); } catch (e) { return []; }
   }
   function gravarLista(lista) {
-    try { localStorage.setItem(CHAVE_REG, JSON.stringify(lista)); return true; } catch (e) { avisar('Não deu para salvar'); return false; }
+    try { localStorage.setItem(CHAVE_REG, JSON.stringify(lista)); redesenharInicio(); return true; } catch (e) { avisar('Não deu para salvar'); return false; }
   }
   /* O que está digitado na mesa agora (guardado no registro para "Usar de novo") */
   function entradaAtual() {
@@ -308,26 +319,81 @@
   }
   /* Grava o envio novo: avança o contador e guarda o registro com data e hora. Chamado só quando o envio aconteceu. */
   function registrarEnvio(numero, formato, extra) {
-    var reg = D.novoRegistro(extra.orcamento, { numero: numero, formato: formato, material: extra.material, cliente: extra.cliente,
+    var opcoes = { numero: numero, formato: formato, material: extra.material, cliente: extra.cliente,
       descricao: extra.descricao, entrada: extra.entrada, prazo: extra.prazo, validadeAte: extra.validadeAte, versaoApp: versaoEmUso,
-      catalogoId: pecaVinculada() ? vinculo.id : '' });
+      catalogoId: pecaVinculada() ? vinculo.id : '', informado: extra.informado, formasPag: extra.formasPag, pix: extra.pix, obs: extra.obs };
+    var reg = D.novoRegistro(extra.orcamento, opcoes), chave = D.chaveRegistro(reg);
     try {
       localStorage.setItem(CHAVE_CONT, String(numero));
-      var lista = JSON.parse(localStorage.getItem(CHAVE_REG) || '[]');
-      localStorage.setItem(CHAVE_REG, JSON.stringify(D.adicionarRegistro(lista, reg, D.MAX_REGISTROS)));
+      if (pedidoVinculo) {   // pedido anotado antes: o MESMO registro passa a Orçado (ganha Nº, data e valores)
+        var orcado = D.orcarPedido(lerLista(), pedidoVinculo.chave, extra.orcamento, opcoes);
+        localStorage.setItem(CHAVE_REG, JSON.stringify(orcado.lista));
+        chave = orcado.chave;
+      } else {
+        var lista = JSON.parse(localStorage.getItem(CHAVE_REG) || '[]');
+        localStorage.setItem(CHAVE_REG, JSON.stringify(D.adicionarRegistro(lista, reg, D.MAX_REGISTROS)));
+      }
     } catch (e) { /* armazenamento indisponível: o envio continua valendo, só não fica registrado */ }
+    if (pedidoVinculo) { pedidoVinculo = null; desenharVinculoPedido(); }
     /* Peça do catálogo: o valor enviado vira a referência e ela sobe de uso */
     if (reg.catalogoId) gravarCatalogo(D.registrarUsoPeca(lerCatalogo(), reg.catalogoId, reg.valorPeca, new Date(reg.ts)));
+    if (!extra.semAviso) mostrarEnviado(numero, formato);
+    return chave;
   }
   /* Reenvio: mesmo número, o contador não anda; soma 1 em "reenvios" */
   function registrarReenvio(reg, extra) {
-    var m = { reenvios: (reg.reenvios || 0) + 1, cliente: extra.cliente };
-    if (extra.formato === 'imagem') { m.descricao = extra.descricao; m.prazo = extra.prazo; }
+    /* Orçamento registrado sem enviar: o primeiro envio troca o formato (Texto ou Imagem) e não conta como reenvio */
+    var m = reg.formato === 'sem-envio' ? { formato: extra.formato, cliente: extra.cliente } : { reenvios: (reg.reenvios || 0) + 1, cliente: extra.cliente };
+    if (extra.descricao !== undefined) m.descricao = extra.descricao;      // texto e imagem levam descrição e prazo (desde o 0.6.0-teste.13)
+    if (extra.prazo !== undefined) m.prazo = extra.prazo;
+    if (extra.formasPag !== undefined) { m.formasPag = extra.formasPag; m.pix = extra.pix; m.obs = extra.obs; }
     gravarLista(D.atualizarRegistro(lerLista(), D.chaveRegistro(reg), m));
     if (!$('tela-hist').hidden) desenharHist();
   }
 
+  /* ---------- Pagamento e observação deste orçamento (0.6.0-teste.14) ----------
+     Vem de Meu negócio (ou do registro, no reenvio) e pode ser trocado só para este orçamento. Recolhido, com o resumo. */
+  var envPag = { formas: [], pix: '', obs: '' }, envPagPadrao = envPag;
+  function pagDoNegocio() { var n = config.negocio; return { formas: n.formas.slice(), pix: n.pix, obs: n.obs }; }
+  function prepararPagEnvio(reg) {
+    envPagPadrao = pagDoNegocio();
+    envPag = reg && Array.isArray(reg.formasPag) ? { formas: reg.formasPag.slice(), pix: reg.pix || '', obs: reg.obs || '' } : pagDoNegocio();
+    $('env-pix').value = envPag.pix; $('env-obs').value = envPag.obs;
+    mostrarPagEnvio(false);
+  }
+  function pagMudou() { return envPag.formas.join() !== envPagPadrao.formas.join() || envPag.pix.trim() !== envPagPadrao.pix || envPag.obs.trim() !== envPagPadrao.obs; }
+  function desenharPagEnvio() {
+    var temPix = envPag.formas.indexOf('pix') !== -1, partes = [envPag.formas.length ? C.fraseFormas(envPag.formas) : 'Sem formas de pagamento'];
+    if (temPix && envPag.pix.trim()) partes.push('Pix: ' + envPag.pix.trim());
+    if (envPag.obs.trim()) partes.push('Obs.: ' + envPag.obs.trim());
+    $('pg-resumo').textContent = partes.join(' · ');
+    desenharChipsFormas($('env-formas'), envPag.formas);
+    $('env-pix-campo').hidden = !temPix;
+    var mudou = pagMudou();
+    $('pg-selo').hidden = !mudou; $('pg-padrao').hidden = !mudou;
+  }
+  function mostrarPagEnvio(abrir) {
+    $('pg-painel').hidden = !abrir;
+    $('pg-abrir').setAttribute('aria-expanded', String(!!abrir));
+    $('pg-acao').textContent = abrir ? 'Fechar' : 'Alterar';
+    desenharPagEnvio();
+  }
+  /* O que vai no orçamento: limpo (formas válidas; chave e observação aparadas) */
+  function pagParaEnvio() { return { formasPag: C.lerFormas(envPag.formas), pix: D.limparTexto(envPag.pix, 77), obs: D.limparTexto(envPag.obs, 160) }; }
+  $('pg-abrir').addEventListener('click', function () { mostrarPagEnvio($('pg-painel').hidden); });
+  Array.prototype.forEach.call($('env-formas').querySelectorAll('[data-fp]'), function (b) {
+    b.addEventListener('click', function () { envPag.formas = alternarForma(envPag.formas, b.dataset.fp); desenharPagEnvio(); agendarImagem(); });
+  });
+  $('env-pix').addEventListener('input', function () { envPag.pix = $('env-pix').value; desenharPagEnvio(); agendarImagem(); });
+  $('env-obs').addEventListener('input', function () { envPag.obs = $('env-obs').value; desenharPagEnvio(); agendarImagem(); });
+  $('pg-padrao').addEventListener('click', function () {
+    envPag = { formas: envPagPadrao.formas.slice(), pix: envPagPadrao.pix, obs: envPagPadrao.obs };
+    $('env-pix').value = envPag.pix; $('env-obs').value = envPag.obs;
+    desenharPagEnvio(); agendarImagem();
+  });
+
   /* ---------- Enviar orçamento: painel com Texto ou Imagem ---------- */
+  var pedidoVinculo = null;   // pedido que está sendo orçado: { chave, cliente, descricao }
   var folha = $('folha'), eCliente = $('env-cliente'), eImgDesc = $('img-descricao'), eImgPrazo = $('img-prazo');
   var imagem = null;            // { arquivo, url, numero, data, validadeAte } — imagem já pronta para enviar
   var tokenImagem = 0, timerImagem;
@@ -355,11 +421,15 @@
   function abrirFolha(reg) {
     envioReg = reg || null;
     if (!envioReg && (!ultimoOrcamento || ultimoOrcamento.valorCobrar <= 0)) { avisar('Preencha peso e tempo primeiro'); return; }
-    eCliente.value = envioReg ? envioReg.cliente : '';
-    eImgDesc.value = envioReg ? envioReg.descricao : (pecaVinculada() ? D.descricaoDaPeca(pecaVinculada()) : '');
+    if (!envioReg && !pedidoVinculo && D.estadoLimite(lerLista()).cheio) { avisar(D.estadoLimite(lerLista()).texto); return; }
+    eCliente.value = envioReg ? envioReg.cliente : (pedidoVinculo ? pedidoVinculo.cliente : '');
+    eImgDesc.value = envioReg ? envioReg.descricao : (pedidoVinculo ? pedidoVinculo.descricao : pecaVinculada() ? D.descricaoDaPeca(pecaVinculada()) : '');
     eImgPrazo.value = envioReg && envioReg.prazo ? envioReg.prazo : config.negocio.prazo;
     $('painel-imagem').hidden = true; $('abrir-imagem').setAttribute('aria-pressed', 'false');
-    $('folha-rotulo').textContent = envioReg ? 'Reenviar orçamento' : 'Enviar orçamento';
+    $('folha-rotulo').textContent = envioReg && envioReg.formato !== 'sem-envio' ? 'Reenviar orçamento' : 'Enviar orçamento';
+    $('se-abrir').hidden = !!envioReg;          // registrar sem enviar só existe para orçamento novo
+    seInformado = ''; $('se-aprovado').checked = false; mostrarSemEnvio(false);
+    prepararPagEnvio(envioReg);
     $('folha-numero').textContent = 'Nº ' + C.formatarNumero(numeroEnvio());
     desenharChipsClientes();
     descartarImagem();
@@ -375,11 +445,12 @@
   /* Texto: compartilhamento nativo; sem suporte (ou erro), abre o WhatsApp */
   $('enviar-texto').addEventListener('click', function () {
     var reg = envioReg, numero = numeroEnvio(), orc = orcamentoEnvio(), entrada = reg ? null : entradaAtual();
-    var cliente = D.limparTexto(eCliente.value, 60);
-    var texto = C.textoOrcamento(orc, { material: nomeFilamentoEnvio(), numero: numero, negocio: config.negocio.nome });
+    var cliente = D.limparTexto(eCliente.value, 60), descricao = D.limparTexto(eImgDesc.value, 120), prazo = D.limparTexto(eImgPrazo.value, 40), pg = pagParaEnvio();
+    var texto = C.textoOrcamento(orc, { material: nomeFilamentoEnvio(), numero: numero, negocio: config.negocio.nome, descricao: descricao, prazo: prazo,
+      formas: pg.formasPag, pix: pg.pix, obs: pg.obs });
     var registrar = function () {
-      if (reg) registrarReenvio(reg, { formato: 'texto', cliente: cliente });
-      else registrarEnvio(numero, 'texto', { orcamento: orc, material: nomeFilamentoEnvio(), cliente: cliente, entrada: entrada });
+      if (reg) registrarReenvio(reg, Object.assign({ formato: 'texto', cliente: cliente, descricao: descricao, prazo: prazo }, pg));
+      else registrarEnvio(numero, 'texto', Object.assign({ orcamento: orc, material: nomeFilamentoEnvio(), cliente: cliente, descricao: descricao, prazo: prazo, entrada: entrada }, pg));
     };
     fecharFolha();
     if (navigator.share) {
@@ -406,7 +477,8 @@
   function dadosDaImagem(numero, datas) {
     return C.dadosOrcamento(orcamentoEnvio(), {
       negocio: config.negocio, numero: numero, data: datas.data, validadeAte: datas.validadeAte, material: nomeFilamentoEnvio(),
-      cliente: eCliente.value, descricao: eImgDesc.value, prazo: eImgPrazo.value
+      cliente: eCliente.value, descricao: eImgDesc.value, prazo: eImgPrazo.value,
+      formas: envPag.formas, pix: envPag.pix, obs: envPag.obs
     });
   }
   function prepararImagem() {
@@ -432,10 +504,46 @@
     clearTimeout(timerImagem); timerImagem = setTimeout(prepararImagem, 250);
   }
   $('abrir-imagem').addEventListener('click', function () {
+    mostrarSemEnvio(false);
     $('painel-imagem').hidden = false; $('abrir-imagem').setAttribute('aria-pressed', 'true');
     prepararImagem();
   });
   [eCliente, eImgDesc, eImgPrazo].forEach(function (el) { el.addEventListener('input', agendarImagem); selecionarAoFocar(el); });
+
+  /* Registrar sem enviar: orçamento informado pessoalmente, por telefone ou outro meio. Grava como Orçado, com Nº e validade, sem compartilhar.
+     Com "Já aprovado pelo cliente", abre em seguida o painel de condição de pagamento (o mesmo da aprovação). */
+  var seInformado = '';
+  function desenharSemEnvio() {
+    Array.prototype.forEach.call($('se-informado').querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.inf === seInformado)); });
+    var n = 'Nº ' + C.formatarNumero(numeroEnvio());
+    $('se-registrar').textContent = $('se-aprovado').checked ? 'Registrar e aprovar ' + n : 'Registrar orçamento ' + n;
+  }
+  function mostrarSemEnvio(abrir) {
+    $('painel-sem-envio').hidden = !abrir;
+    $('se-abrir').setAttribute('aria-expanded', String(!!abrir));
+    if (abrir) desenharSemEnvio();
+  }
+  $('se-abrir').addEventListener('click', function () {
+    var abrir = $('painel-sem-envio').hidden;
+    if (abrir) { $('painel-imagem').hidden = true; $('abrir-imagem').setAttribute('aria-pressed', 'false'); }
+    mostrarSemEnvio(abrir);
+  });
+  Array.prototype.forEach.call($('se-informado').querySelectorAll('button'), function (b) {
+    b.addEventListener('click', function () { seInformado = seInformado === b.dataset.inf ? '' : b.dataset.inf; desenharSemEnvio(); });
+  });
+  $('se-aprovado').addEventListener('change', desenharSemEnvio);
+  $('se-registrar').addEventListener('click', function () {
+    if (envioReg) return;
+    var numero = numeroEnvio(), orc = orcamentoEnvio(), aprovar = $('se-aprovado').checked;
+    var extra = { orcamento: orc, material: nomeFilamentoEnvio(), cliente: D.limparTexto(eCliente.value, 60), descricao: D.limparTexto(eImgDesc.value, 120),
+      prazo: D.limparTexto(eImgPrazo.value, 40), validadeAte: datasEnvio().validadeAte, formasPag: pagParaEnvio().formasPag, pix: pagParaEnvio().pix, obs: pagParaEnvio().obs, entrada: entradaAtual(), informado: seInformado, semAviso: aprovar };
+    fecharFolha();
+    var chave = registrarEnvio(numero, 'sem-envio', extra);
+    if (!aprovar) return;
+    var reg = achaPorChave(chave);
+    if (!reg) { avisar('Orçamento Nº ' + C.formatarNumero(numero) + ' registrado'); return; }
+    detChave = chave; desenharDetalhe(reg); abrirCond(reg, 'aprovar');
+  });
 
   function baixarImagem(img) {
     var a = document.createElement('a');
@@ -448,6 +556,7 @@
     var reg = envioReg, orc = orcamentoEnvio(), entrada = reg ? null : entradaAtual();
     var extra = { orcamento: orc, formato: 'imagem', material: nomeFilamentoEnvio(), cliente: D.limparTexto(eCliente.value, 60),
       descricao: D.limparTexto(eImgDesc.value, 120), prazo: D.limparTexto(eImgPrazo.value, 40), validadeAte: img.validadeAte, entrada: entrada };
+    Object.assign(extra, pagParaEnvio());
     var gravar = function () { if (reg) registrarReenvio(reg, extra); else registrarEnvio(img.numero, 'imagem', extra); };
     var registrar = function () { gravar(); fecharFolha(); };
     if (navigator.canShare && navigator.canShare({ files: [img.arquivo] })) {
@@ -475,7 +584,31 @@
       cVida = $('cfg-vida'), cHorasAno = $('cfg-horas-ano'), cManut = $('cfg-manut');
   var modoEdicao = 'simples';
   var cNeg = { nome: $('neg-nome'), whatsapp: $('neg-whatsapp'), instagram: $('neg-instagram'), cidade: $('neg-cidade'),
-    cnpj: $('neg-cnpj'), prazo: $('neg-prazo'), pagamento: $('neg-pagamento'), obs: $('neg-obs') };
+    cnpj: $('neg-cnpj'), prazo: $('neg-prazo'), obs: $('neg-obs'), pix: $('neg-pix') };
+  var negFormas = [];       // chips de Formas de pagamento em Meu negócio (o que está na tela, ainda sem salvar)
+  function desenharChipsFormas(box, formas) {
+    Array.prototype.forEach.call(box.querySelectorAll('[data-fp]'), function (b) { b.setAttribute('aria-pressed', String(formas.indexOf(b.dataset.fp) !== -1)); });
+  }
+  function alternarForma(formas, f) { var n = formas.slice(), i = n.indexOf(f); if (i === -1) n.push(f); else n.splice(i, 1); return C.lerFormas(n); }
+  function desenharFormasNegocio() {
+    desenharChipsFormas($('neg-formas'), negFormas);
+    $('neg-pix-campo').hidden = negFormas.indexOf('pix') === -1;
+  }
+  Array.prototype.forEach.call($('neg-formas').querySelectorAll('[data-fp]'), function (b) {
+    b.addEventListener('click', function () { negFormas = alternarForma(negFormas, b.dataset.fp); desenharFormasNegocio(); });
+  });
+  function desenharAvisoPagamento() {
+    var n = config.negocio, tem = !!n.avisoPagTexto;
+    $('neg-aviso-pag').hidden = !tem;
+    if (!tem) return;
+    var marcadas = n.formas.length ? 'Marcamos ' + C.fraseFormas(n.formas).replace(' ou ', ' e ') : 'Nenhuma forma foi reconhecida';
+    $('neg-aviso-pag-txt').textContent = 'Antes estava escrito “' + n.avisoPagTexto + '”. ' + marcadas +
+      (n.avisoPagResto ? ' e levamos “' + n.avisoPagResto + '” para a observação.' : '.') + ' Confira.';
+  }
+  $('neg-aviso-pag-fechar').addEventListener('click', function () {
+    delete config.negocio.avisoPagTexto; delete config.negocio.avisoPagResto;
+    salvarConfig(config); desenharAvisoPagamento();
+  });
   var cValidade = $('neg-validade');
   /* WhatsApp: formata como (xx) xxxx-xxxx enquanto digita, mantendo o cursor no mesmo dígito */
   (function () {
@@ -570,6 +703,7 @@
   /* ---------- Meu negócio e logo ---------- */
   function preencherNegocio(n) {
     Object.keys(cNeg).forEach(function (k) { cNeg[k].value = n[k]; });
+    negFormas = n.formas.slice(); desenharFormasNegocio(); desenharAvisoPagamento();
     cValidade.value = String(n.validadeDias);
     logoPendente = undefined;
     mostrarLogo(lerLogoSalvo());
@@ -584,6 +718,7 @@
     var n = {};
     Object.keys(cNeg).forEach(function (k) { n[k] = cNeg[k].value; });
     n.validadeDias = C.lerInteiro(cValidade.value);
+    n.formas = negFormas.slice();
     return C.lerNegocio(n);
   }
   $('cfg-logo-escolher').addEventListener('click', function () { $('cfg-logo-arq').click(); });
@@ -707,7 +842,8 @@
   $('form-config').addEventListener('submit', function (ev) {
     ev.preventDefault();
     var ok = gravarConfigTela();
-    sairConfig();
+    configInicial = JSON.stringify(lerConfigTela());
+    if (subDaRota()) voltarTarefa('mais'); else atualizarBarraConfig();   // Salvar volta à lista de Mais
     avisar(ok ? 'Configurações salvas' : 'Salvo só até fechar o app');
   });
   /* Restaura hora (modo Simples), perda, preço mínimo e arredondamento (Exato); a lista de filamentos, o modo escolhido, os dados da impressora e os dados do negócio são mantidos */
@@ -922,10 +1058,26 @@
 
   /* ---------- Histórico de orçamentos ---------- */
   var LEMBRETE_BACKUP_ATIVO = true;    // faixa de lembrete de backup no topo do histórico (20 ou mais orçamentos desde o último backup)
-  var histPeriodo = '30', histSituacao = '', histBusca = '', histLimite = 50, histTimerBusca;
+  var histPeriodo = '30', histSituacao = '', histPagamento = '', histBusca = '', histLimite = 50, histTimerBusca;
+  /* Lista filtrada aberta pelo Negócio ou pelo Início (A receber, Esperando resposta, Vencidos, Ver das tarefas): tela de tarefa #lista,
+     com seta e o nome do filtro, sem barra de abas. O filtro fica separado dos chips da aba Pedidos (que nunca herda filtro escondido)
+     e guardado na sessão, para sobreviver a puxar a tela e recarregar. { titulo, situacao, pagamento, venceEm, prazoVencido, aReceber, vazio } */
+  var CHAVE_LISTA = CHAVE + '-lista';
+  var listaFiltro = null;
+  try { listaFiltro = JSON.parse(sessionStorage.getItem(CHAVE_LISTA) || 'null'); } catch (e) { listaFiltro = null; }
+  function emLista() { return location.hash === '#lista' && !!listaFiltro; }
+  function abrirLista(f) {
+    listaFiltro = f;
+    try { sessionStorage.setItem(CHAVE_LISTA, JSON.stringify(f)); } catch (e) {}
+    histBusca = ''; $('hist-busca').value = ''; histLimite = 50;
+    irTarefa('lista');
+  }
+  var destaqueChave = null;            // pedido recém-anotado: a linha pisca em verde uma vez
   var CHAVE_PERIODO = CHAVE + '-periodo';          // período escolhido (vale para a Lista e para o painel de vendas)
   try { var perSalvo = localStorage.getItem(CHAVE_PERIODO); if (['hoje', '7', '30', 'mes', 'tudo'].indexOf(perSalvo) !== -1) histPeriodo = perSalvo; } catch (e) {}
-  var ROTULO_SIT = { enviado: 'Enviado', vencido: 'Vencido', aprovado: 'Aprovado', recusado: 'Recusado' };
+  var ESPERA = ['pedido', 'enviado', 'vencido', 'aprovado', 'producao', 'embalagem', 'pronto'];   // filas de trabalho: sem período, do mais antigo para o mais novo (Aprovado desde o 0.6.0-teste.12)
+  var CANAL_ROT = { whatsapp: 'WhatsApp', instagram: 'Instagram', presencial: 'Presencial', outro: 'Outro' };
+  function rotuloEtapa(st) { return (st === 'entregue' ? '✓ ' : '') + D.ROTULOS_ETAPA[st]; }
   var detChave = null;                 // orçamento aberto no detalhe
 
   function el(tag, cls, txt) {
@@ -934,12 +1086,28 @@
     if (txt !== undefined) e.textContent = txt;
     return e;
   }
+  /* Chip com o número de itens que aparecem ao tocar nele; zero = sem número e texto mais claro */
+  function pintarChip(b, rotulo, n, ligado) {
+    b.textContent = rotulo;
+    if (n > 0) b.appendChild(el('span', 'n', String(n)));
+    b.classList.toggle('zero', !(n > 0));
+    b.setAttribute('aria-pressed', String(ligado));
+    b.setAttribute('aria-label', rotulo + (n > 0 ? ', ' + n : ', nenhum'));
+  }
   function desenharHist() {
     var todos = lerLista(), hoje = new Date();
-    var espera = histSituacao === 'enviado' || histSituacao === 'vencido';   // fila de quem aguarda resposta: sem período, do mais antigo para o mais novo
-    var lista = D.filtrarRegistros(todos, { periodo: histPeriodo, situacao: histSituacao, busca: histBusca, hoje: hoje });
+    var lst = emLista() ? listaFiltro : null;
+    var sit = lst ? lst.situacao || '' : histSituacao, pag = lst ? lst.pagamento || '' : histPagamento;
+    var espera = !!lst || ESPERA.indexOf(sit) !== -1 || (!sit && !!pag);
+    var lista = D.filtrarRegistros(todos, { periodo: lst ? 'tudo' : histPeriodo, situacao: sit, pagamento: pag, venceEm: lst ? lst.venceEm : '', prazoVencido: lst ? lst.prazoVencido : false, busca: histBusca, hoje: hoje });
+    if (lst && lst.aReceber) lista = lista.filter(function (r) { var p = D.situacaoPagamento(r); return !!p.estado && p.falta > 0; });   // a mesma regra do cartão A receber
+    /* Cabeçalho: aba Pedidos ou lista filtrada (tela de tarefa) */
+    $('hist-voltar').hidden = !lst;
+    $('hist-titulo').textContent = lst ? lst.titulo : 'Pedidos';
+    $('ped-novo').hidden = !!lst;
+    $('hist-sit').hidden = !!lst;
     var res = D.resumir(lista);
-    $('hist-n').textContent = String(res.qtd);
+    $('hist-n').textContent = String(lista.filter(function (r) { return r.status !== 'pedido'; }).length);   // pedido ainda sem orçamento não conta como enviado
     $('hist-total').textContent = moeda(res.total);
     var apr = D.aprovadosDoPeriodo(todos, { periodo: histPeriodo, busca: histBusca, hoje: hoje });   // aprovados pela data da aprovação (a mesma regra do painel de vendas)
     $('hist-apr').textContent = String(apr.aprovados);
@@ -947,19 +1115,33 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-per]'), function (b) {
       b.setAttribute('aria-pressed', String(b.dataset.per === histPeriodo));
     });
-    var cont = D.contarSituacoes(todos, hoje);
-    Array.prototype.forEach.call(document.querySelectorAll('[data-sit]'), function (b) {
-      var st = b.dataset.sit;
-      b.setAttribute('aria-pressed', String(st === histSituacao));
-      b.textContent = ROTULO_SIT[st] + (cont[st] ? ' ' + cont[st] : '');
-    });
+    if (!lst) {
+      /* O número de cada chip = o que aparece ao tocar nele, combinado com o outro chip que já estiver ligado (etapa × pagamento) */
+      Array.prototype.forEach.call(document.querySelectorAll('[data-sit]'), function (b) {
+        var st = b.dataset.sit;
+        pintarChip(b, D.ROTULOS_ETAPA[st], D.filtrarRegistros(todos, { periodo: histPeriodo, situacao: st, pagamento: histPagamento, hoje: hoje }).length, st === histSituacao);
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('[data-pag]'), function (b) {
+        var pg = b.dataset.pag;
+        pintarChip(b, D.ROTULOS_PAGAMENTO[pg], D.filtrarRegistros(todos, { periodo: histPeriodo, situacao: histSituacao, pagamento: pg, hoje: hoje }).length, pg === histPagamento);
+      });
+    }
     $('hist-per').hidden = espera;
-    $('hist-resumo').hidden = !!histSituacao;
+    var filtrado = !!lst || !!sit || !!pag;
+    $('hist-resumo').hidden = filtrado;
     var resSit = $('hist-sit-resumo');
-    resSit.hidden = !histSituacao;
-    if (histSituacao) {
+    resSit.hidden = !filtrado || !!(lst && lst.aReceber);      // em A receber o cartão já diz quantos são
+    if (filtrado) {
       var ordem = espera ? ' · mais antigos primeiro' : '';
-      resSit.textContent = res.qtd + (res.qtd === 1 ? ' orçamento' : ' orçamentos') + ' · ' + moeda(res.total) + ordem;
+      resSit.textContent = res.qtd + (res.qtd === 1 ? ' registro' : ' registros') + (res.total > 0 && !(lst && lst.aReceber) ? ' · ' + moeda(res.total) : '') + ordem;
+    }
+    var comReceber = !!(lst && lst.aReceber);
+    $('hist-receber').hidden = !comReceber;
+    if (comReceber) {
+      var ar = D.aReceber(todos), rec = D.recebidoNoPeriodo(todos, histPeriodo, hoje);
+      $('hr-falta').textContent = moeda(ar.total);
+      $('hr-qtd').textContent = ar.qtd === 1 ? '1 pedido com saldo' : ar.qtd + ' pedidos com saldo';
+      $('hr-recebido').textContent = 'recebido (' + ROTULO_PERIODO[histPeriodo].toLowerCase() + '): ' + moeda(rec.total);
     }
     var ultimoBackup = lerEstadoBackup();
     var lemb = LEMBRETE_BACKUP_ATIVO ? D.precisaLembreteBackup(todos, ultimoBackup) : { mostrar: false, qtd: 0 };
@@ -970,12 +1152,16 @@
     var vazio = $('hist-vazio');
     if (!lista.length) {
       vazio.hidden = false;
-      vazio.textContent = !todos.length ? 'Nenhum orçamento enviado ainda. Cada envio, em texto ou imagem, aparece aqui.'
+      vazio.textContent = !todos.length ? 'Nenhum pedido ainda. Toque em + Pedido para anotar um, ou em + Orçar para fazer um orçamento.'
         : histBusca ? 'Nada encontrado para “' + histBusca + '”.'
-        : histSituacao === 'enviado' ? 'Nenhum orçamento aguardando resposta.'
-        : histSituacao === 'vencido' ? 'Nenhum orçamento vencido.'
-        : histSituacao ? 'Nenhum orçamento ' + (histSituacao === 'aprovado' ? 'aprovado' : 'recusado') + ' neste período. Toque em Tudo para ver todos.'
-        : 'Nenhum orçamento neste período. Toque em Tudo para ver todos.';
+        : lst ? lst.vazio || 'Nada aqui agora.'
+        : pag && !sit ? 'Nenhum pedido com pagamento ' + D.ROTULOS_PAGAMENTO[pag].toLowerCase() + '.'
+        : sit === 'enviado' ? 'Nenhum orçamento aguardando resposta.'
+        : sit === 'vencido' ? 'Nenhum orçamento vencido.'
+        : sit === 'pedido' ? 'Nenhum pedido para orçar.'
+        : sit && espera ? 'Nada em ' + D.ROTULOS_ETAPA[sit] + ' agora.'
+        : sit ? 'Nada em ' + D.ROTULOS_ETAPA[sit] + ' neste período. Toque em Tudo para ver todos.'
+        : 'Nada neste período. Toque em Tudo para ver todos.';
     } else { vazio.hidden = true; }
     var grupos = espera ? [{ rotulo: '', itens: lista.slice(0, histLimite) }] : D.agruparPorDia(lista.slice(0, histLimite), hoje);
     grupos.forEach(function (g) {
@@ -984,25 +1170,52 @@
       g.itens.forEach(function (r) {
         var it = el('button', 'item'); it.type = 'button';
         var meio = el('span', 'meio');
-        meio.appendChild(el('span', 'sup', 'Nº ' + C.formatarNumero(r.n) + ' · ' + D.hora(r.ts) + ' · ' + (r.formato === 'imagem' ? 'Imagem' : 'Texto')));
-        meio.appendChild(el('strong', r.cliente ? '' : 'sem', r.cliente || 'Sem cliente'));
-        meio.appendChild(el('span', 'peca', D.descricaoLinha(r)));
-        var dir = el('span', 'dir');
-        dir.appendChild(el('b', '', moeda(r.total)));
-        if (espera) {
-          var te = D.textoEspera(r, hoje);
-          dir.appendChild(el('span', 'pill ' + (te.antigo ? 'vencido' : 'enviado'), te.texto));
+        var st = D.situacao(r, hoje);
+        if (comReceber) {      // A receber: menos coisa na linha para caber o botão Recebi (etapa e pagamento em cima, só o que falta à direita)
+          var pgr = D.situacaoPagamento(r);
+          meio.appendChild(el('span', 'sup', 'Nº ' + C.formatarNumero(r.n) + ' · ' + D.ROTULOS_ETAPA[st] + ' · ' + pgr.rotulo));
+          meio.appendChild(el('strong', r.cliente ? '' : 'sem', r.cliente || 'Sem cliente'));
+          meio.appendChild(el('span', 'peca', D.descricaoLinha(r)));
+          var dirR = el('span', 'dir');
+          dirR.appendChild(el('span', 'falta-rot', 'falta')); dirR.appendChild(el('b', '', moeda(pgr.falta)));
+          it.appendChild(meio); it.appendChild(dirR);
         } else {
-          var st = D.situacao(r, hoje);
-          dir.appendChild(el('span', 'pill ' + st, D.ROTULOS_SITUACAO[st]));
+          meio.appendChild(el('span', 'sup', r.n > 0 ? 'Nº ' + C.formatarNumero(r.n) + ' · ' + D.hora(r.ts) + ' · ' + D.rotuloFormato(r)
+            : 'Pedido · ' + D.hora(r.ts) + (r.canal ? ' · ' + CANAL_ROT[r.canal] : '')));
+          meio.appendChild(el('strong', r.cliente ? '' : 'sem', r.cliente || 'Sem cliente'));
+          meio.appendChild(el('span', 'peca', D.descricaoLinha(r)));
+          var dir = el('span', 'dir');
+          if (r.status === 'pedido') { if (r.prazoDesejado) dir.appendChild(el('b', '', 'prazo ' + D.validadeCurta(r.prazoDesejado, hoje))); }
+          else dir.appendChild(el('b', '', moeda(r.total)));
+          var pills = el('span', 'pills');
+          if (espera && (st === 'enviado' || st === 'vencido')) {
+            var te = D.textoEspera(r, hoje);
+            pills.appendChild(el('span', 'pill ' + (te.antigo ? 'vencido' : 'enviado'), te.texto));
+          } else {
+            pills.appendChild(el('span', 'pill ' + st, rotuloEtapa(st)));
         }
+        var pgl = D.situacaoPagamento(r);
+        if (pgl.estado) pills.appendChild(el('span', 'pill-pag ' + pgl.estado, pgl.rotulo));
+        dir.appendChild(pills);
         it.appendChild(meio); it.appendChild(dir);
+        }
         it.addEventListener('click', function () { abrirDetalhe(r); });
-        bloco.appendChild(it);
+        if (destaqueChave && D.chaveRegistro(r) === destaqueChave) it.classList.add('novo');
+        if (comReceber) {      // A receber: botão Recebi ao lado da linha (abre o painel de recebimento com o que falta)
+          var linha = el('div', 'linha-rec'), rb = el('button', 'btn-recebi', 'Recebi'); rb.type = 'button';
+          rb.setAttribute('aria-label', 'Recebi de ' + (r.cliente || 'Nº ' + C.formatarNumero(r.n)));
+          rb.addEventListener('click', function () { receberDaLista(r); });
+          linha.appendChild(it); linha.appendChild(rb); bloco.appendChild(linha);
+        } else bloco.appendChild(it);
       });
       box.appendChild(bloco);
     });
     $('hist-mais').hidden = lista.length <= histLimite;
+    destaqueChave = null;
+  }
+  function receberDaLista(r) {
+    var reg = achaPorChave(D.chaveRegistro(r)); if (!reg) return;
+    detChave = D.chaveRegistro(reg); desenharDetalhe(reg); abrirRec();
   }
   $('hist-busca').addEventListener('input', function () {
     clearTimeout(histTimerBusca);
@@ -1012,7 +1225,7 @@
   function mudarPeriodo(p) {
     histPeriodo = p; histLimite = 50;
     try { localStorage.setItem(CHAVE_PERIODO, p); } catch (e) {}
-    if (!$('tela-vendas').hidden) desenharVendas(); else desenharHist();
+    if (!$('tela-vendas').hidden) desenharVendas(); else if (!$('tela-negocio').hidden) desenharNegocio(); else desenharHist();
   }
   Array.prototype.forEach.call(document.querySelectorAll('[data-per]'), function (b) {
     b.addEventListener('click', function () { mudarPeriodo(b.dataset.per); });
@@ -1022,6 +1235,9 @@
   });
   Array.prototype.forEach.call(document.querySelectorAll('[data-sit]'), function (b) {
     b.addEventListener('click', function () { histSituacao = histSituacao === b.dataset.sit ? '' : b.dataset.sit; histLimite = 50; desenharHist(); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-pag]'), function (b) {
+    b.addEventListener('click', function () { histPagamento = histPagamento === b.dataset.pag ? '' : b.dataset.pag; histLimite = 50; desenharHist(); });
   });
   $('hist-mais').addEventListener('click', function () { histLimite += 50; desenharHist(); });
 
@@ -1033,27 +1249,273 @@
     return null;
   }
   function dm(iso) { var d = new Date(iso); return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2); }
+  function diasDesdeISO(iso, hoje) {
+    var x = new Date(iso), y = new Date(hoje); x.setHours(0, 0, 0, 0); y.setHours(0, 0, 0, 0);
+    return Math.round((y - x) / 86400000);
+  }
+  function textoHa(d) { return d <= 0 ? 'hoje' : d === 1 ? 'há 1 dia' : 'há ' + d + ' dias'; }
+  function mostrarSo(id, sim) { $(id).hidden = !sim; }
   function desenharDetalhe(reg) {
     var hoje = new Date(), st = D.situacao(reg, hoje);
-    $('det-numero').textContent = 'Nº ' + C.formatarNumero(reg.n);
-    var sub = D.descreverEnvio(reg, hoje);
-    if (reg.validadeAte) sub += ' · validade até ' + D.validadeCurta(reg.validadeAte, hoje);
-    if (reg.reenvios > 0) sub += ' · reenviado ' + reg.reenvios + (reg.reenvios === 1 ? ' vez' : ' vezes');
+    var pedido = reg.status === 'pedido', venda = D.ehVenda(reg.status), cancelado = reg.status === 'cancelado';
+    $('det-tit-rot').textContent = pedido ? 'Pedido' : 'Orçamento';
+    $('det-numero').textContent = pedido ? '' : 'Nº ' + C.formatarNumero(reg.n);
+    var sub;
+    if (pedido) sub = 'Anotado ' + (diasDesdeISO(reg.ts, hoje) <= 0 ? 'hoje' : 'em ' + dm(reg.ts)) + ' às ' + D.hora(reg.ts) + (reg.canal ? ' · ' + CANAL_ROT[reg.canal] : '');
+    else {
+      sub = D.descreverEnvio(reg, hoje);
+      if (reg.validadeAte) sub += ' · validade até ' + D.validadeCurta(reg.validadeAte, hoje);
+      if (reg.reenvios > 0) sub += ' · reenviado ' + reg.reenvios + (reg.reenvios === 1 ? ' vez' : ' vezes');
+    }
+    if (reg.prazoDesejado) sub += ' · prazo desejado ' + D.validadeCurta(reg.prazoDesejado, hoje);
     $('det-sub').textContent = sub;
     $('det-cliente').value = reg.cliente; $('det-peca').value = reg.descricao;
+    var texto = reg.pedidoTexto && reg.pedidoTexto !== reg.descricao ? reg.pedidoTexto : '';
+    $('det-texto').textContent = texto; mostrarSo('det-texto', pedido && !!texto);
     $('det-qtd').textContent = reg.qtd > 1 ? reg.qtd + ' × ' + moeda(reg.valorPeca) : '1 peça';
     var mat = D.materialDoRegistro(reg);
     $('det-mat').textContent = [mat, reg.entrada ? 'margem ' + num(reg.entrada.margem) + '%' : ''].filter(Boolean).join(' · ');
     $('det-total').textContent = moeda(reg.total);
     $('det-custo').textContent = moeda(reg.custoTotal);
     $('det-lucro').textContent = moeda(reg.lucro);
+    ['det-linha-total', 'det-interno', 'det-acoes-orc', 'det-catalogo'].forEach(function (id) { mostrarSo(id, !pedido); });
+    mostrarSo('det-bloco-pedido', pedido);
+    mostrarSo('det-bloco-seg', st === 'enviado' || st === 'vencido' || reg.status === 'aprovado' || reg.status === 'recusado');
+    mostrarSo('det-bloco-etapa', venda || cancelado);
     Array.prototype.forEach.call($('det-seg').querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.st === reg.status)); });
     $('det-st-info').textContent = st === 'vencido' ? 'Venceu em ' + D.validadeCurta(reg.validadeAte, hoje) + '. Marque Aprovado ou Recusado quando o cliente responder.'
-      : reg.statusEm && reg.status !== 'enviado' ? D.ROTULOS_SITUACAO[reg.status] + ' em ' + dm(reg.statusEm) : '';
-    $('det-antigo').hidden = !!reg.entrada;
+      : reg.statusEm && reg.status !== 'enviado' ? D.ROTULOS_ETAPA[reg.status] + ' em ' + dm(reg.statusEm) : '';
+    if (venda || cancelado) desenharEtapa(reg, hoje);
+    desenharPagamento(reg);
+    $('det-antigo').hidden = pedido || !!reg.entrada;
     $('det-usar').disabled = !reg.entrada;
+    $('det-reenviar-txt').textContent = reg.formato === 'sem-envio' ? 'Enviar agora' : 'Reenviar';
     $('det-catalogo').disabled = !reg.entrada;  // registro antigo, sem os dados da mesa, não vira peça
+    $('det-excluir').textContent = 'Excluir';
   }
+  /* Pagamento (de Aprovado a Entregue): etiqueta calculada, condição, recebimentos e botão para registrar */
+  var FORMA_ROT = { pix: 'Pix', debito: 'Débito', credito: 'Crédito', dinheiro: 'Dinheiro', cartao: 'Cartão', transferencia: 'Transferência', outro: 'Outro', estorno: 'Devolvido' };
+  function desenharPagamento(reg) {
+    var pg = D.situacaoPagamento(reg);
+    mostrarSo('det-bloco-pag', !!pg.estado);
+    if (!pg.estado) return;
+    $('det-pag-pill').className = 'pill-pag ' + pg.estado; $('det-pag-pill').textContent = pg.rotulo;
+    $('det-pag-info').textContent = pg.estado === 'pago' ? 'Total ' + moeda(pg.total) : pg.texto;
+    var cond = reg.pagamento && reg.pagamento.condicao ? reg.pagamento.condicao : 'entrega';
+    var txt = D.ROTULOS_CONDICAO[cond] || '';
+    if (cond === 'entrada' && reg.pagamento.entradaPrevista) txt += ' · entrada prevista ' + moeda(reg.pagamento.entradaPrevista);
+    $('det-pag-cond').textContent = txt;
+    $('det-rec-novo').hidden = pg.estado === 'pago';
+    var box = $('det-recs'); box.textContent = '';
+    var recs = reg.pagamento && reg.pagamento.recebimentos ? reg.pagamento.recebimentos : [];
+    recs.forEach(function (rc, i) {
+      var li = el('div', 'rec-linha');
+      var neg = rc.valor < 0;
+      var t = el('span', neg ? 'neg' : '', dm(rc.em) + ' · ' + (FORMA_ROT[rc.forma] || 'Outro') + ' · ' + (neg ? '− ' + moeda(-rc.valor) : moeda(rc.valor)));
+      var x = el('button', '', 'Excluir'); x.type = 'button';
+      x.addEventListener('click', function () {
+        if (!x.classList.contains('certeza')) { x.classList.add('certeza'); x.textContent = 'Excluir mesmo?'; return; }
+        if (gravarLista(D.excluirRecebimento(lerLista(), detChave, i))) { desenharDetalhe(regAberto()); desenharHist(); avisar('Recebimento excluído'); }
+      });
+      li.appendChild(t); li.appendChild(x); box.appendChild(li);
+    });
+  }
+  /* Condição de pagamento: ao aprovar (modo 'aprovar') ou depois, pelo detalhe (modo 'mudar') */
+  function soltarChave() { if (folhaDet.hidden) detChave = null; }   // painel aberto fora do detalhe (pelo Início): não deixa o registro preso
+  var condModo = 'aprovar', condSel = 'entrega';
+  function valorTexto(n) { return String(Math.round(n * 100) / 100).replace('.', ','); }
+  function desenharCond(reg) {
+    Array.prototype.forEach.call($('cond-seg').querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.cond === condSel)); });
+    $('cond-entrada').hidden = condSel !== 'entrada';
+    $('cond-ajuda').textContent = condSel === 'entrega' ? 'O cliente paga tudo quando retirar ou receber.'
+      : condSel === 'entrada' ? 'Uma parte agora e o restante depois.' : 'Registra o valor total como recebido hoje.';
+    $('cond-ok').textContent = condModo === 'aprovar' ? 'Aprovar' : 'Salvar';
+    var v = C.lerNumero($('cond-valor').value);
+    Array.prototype.forEach.call($('cond-pcts').querySelectorAll('button'), function (b) {
+      b.setAttribute('aria-pressed', String(Math.abs(D.entradaSugerida(reg.total * b.dataset.pct / 50) - v) < 0.005));
+    });
+  }
+  function abrirCond(reg, modo) {
+    condModo = modo;
+    var cond = reg.pagamento && reg.pagamento.condicao ? reg.pagamento.condicao : 'entrega';
+    condSel = modo === 'aprovar' ? 'entrega' : cond;
+    $('cond-titulo').textContent = modo === 'aprovar' ? 'Aprovar pedido' : 'Condição de pagamento';
+    $('cond-total').textContent = 'Total ' + moeda(reg.total);
+    var prev = reg.pagamento && reg.pagamento.entradaPrevista ? reg.pagamento.entradaPrevista : D.entradaSugerida(reg.total);
+    $('cond-valor').value = valorTexto(prev);
+    desenharCond(reg);
+    $('folha-cond').hidden = false;
+  }
+  function fecharCond() { $('folha-cond').hidden = true; }
+  $('cond-fechar').addEventListener('click', function () { fecharCond(); soltarChave(); });
+  $('cond-fundo').addEventListener('click', function () { fecharCond(); soltarChave(); });
+  Array.prototype.forEach.call($('cond-seg').querySelectorAll('button'), function (b) {
+    b.addEventListener('click', function () { condSel = b.dataset.cond; var reg = regAberto(); if (reg) desenharCond(reg); });
+  });
+  Array.prototype.forEach.call($('cond-pcts').querySelectorAll('button'), function (b) {
+    b.addEventListener('click', function () {
+      var reg = regAberto(); if (!reg) return;
+      $('cond-valor').value = valorTexto(Math.round(reg.total * b.dataset.pct) / 100);
+      desenharCond(reg);
+    });
+  });
+  $('cond-valor').addEventListener('input', function () { var reg = regAberto(); if (reg) desenharCond(reg); });
+  selecionarAoFocar($('cond-valor'));
+  $('cond-ok').addEventListener('click', function () {
+    var reg = regAberto(); if (!reg) return;
+    var c = { condicao: condSel };
+    if (condSel === 'entrada') {
+      var v = C.lerNumero($('cond-valor').value);
+      if (!(v > 0) || v > reg.total) { avisar('A entrada precisa ser maior que zero e até ' + moeda(reg.total)); return; }
+      c.entradaValor = v;
+    }
+    var agora = new Date(), lista = lerLista();
+    var nova = condModo === 'aprovar' ? D.aprovarComCondicao(lista, detChave, c, agora) : D.definirCondicao(lista, detChave, c, agora);
+    fecharCond();
+    if (gravarLista(nova)) { desenharDetalhe(regAberto()); desenharHist(); avisar(condModo === 'aprovar' ? 'Pedido aprovado' : 'Condição salva'); }
+    soltarChave();
+  });
+  $('det-cond-mudar').addEventListener('click', function () { var reg = regAberto(); if (reg) { guardarEdicao(); abrirCond(reg, 'mudar'); } });
+  /* Registrar recebimento */
+  var recForma = 'pix';
+  function desenharForma() { Array.prototype.forEach.call($('rec-forma').querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.forma === recForma)); }); }
+  Array.prototype.forEach.call($('rec-forma').querySelectorAll('button'), function (b) { b.addEventListener('click', function () { recForma = b.dataset.forma; desenharForma(); }); });
+  function dataHojeISO() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function abrirRec() {
+    var reg = regAberto(); if (!reg) return;
+    guardarEdicao();
+    var pg = D.situacaoPagamento(reg), sug = pg.falta;
+    var prev = reg.pagamento && reg.pagamento.condicao === 'entrada' ? reg.pagamento.entradaPrevista || 0 : 0;
+    if (prev > pg.recebido + 0.004) sug = Math.round((prev - pg.recebido) * 100) / 100;
+    $('rec-info').textContent = pg.texto + ' · total ' + moeda(pg.total);
+    $('rec-valor').value = sug > 0 ? valorTexto(sug) : '';
+    $('rec-data').value = dataHojeISO(); recForma = 'pix'; desenharForma();
+    $('folha-rec').hidden = false;
+  }
+  function fecharRec() { $('folha-rec').hidden = true; }
+  $('det-rec-novo').addEventListener('click', abrirRec);
+  $('rec-fechar').addEventListener('click', function () { fecharRec(); soltarChave(); });
+  $('rec-fundo').addEventListener('click', function () { fecharRec(); soltarChave(); });
+  selecionarAoFocar($('rec-valor'));
+  $('rec-ok').addEventListener('click', function () {
+    var v = C.lerNumero($('rec-valor').value);
+    if (!(v > 0)) { avisar('Digite o valor recebido'); return; }
+    var dt = $('rec-data').value ? new Date($('rec-data').value + 'T12:00:00') : new Date();
+    if (isNaN(dt.getTime())) dt = new Date();
+    var nova = D.registrarRecebimento(lerLista(), detChave, { valor: v, em: dt, forma: recForma });
+    fecharRec();
+    if (gravarLista(nova)) { desenharDetalhe(regAberto()); desenharHist(); avisar('Recebimento registrado'); }
+    soltarChave();
+  });
+  /* Etapa (de Aprovado em diante): um botão com a próxima etapa e, em "Mais opções", pular, voltar uma etapa e cancelar */
+  function desenharEtapa(reg, hoje) {
+    var st = reg.status, pill = $('det-etapa-pill');
+    pill.className = 'pill ' + st; pill.textContent = rotuloEtapa(st);
+    var d = diasDesdeISO(reg.statusEm || reg.ts, hoje);
+    $('det-etapa-info').textContent = st === 'cancelado' ? 'Cancelado ' + textoHa(d) : d <= 0 ? 'desde hoje em ' + D.ROTULOS_ETAPA[st] : textoHa(d) + ' em ' + D.ROTULOS_ETAPA[st];
+    var prox = D.proximaEtapa(st), ant = D.etapaAnterior(reg), btn = $('det-avancar');
+    if (st === 'cancelado') { btn.hidden = !ant; btn.dataset.acao = ant || ''; btn.textContent = ant ? 'Reabrir (volta para ' + D.ROTULOS_ETAPA[ant] + ')' : ''; }
+    else { btn.hidden = !prox; btn.dataset.acao = prox || ''; btn.textContent = prox ? 'Avançar para ' + D.ROTULOS_ETAPA[prox] : ''; }
+    var box = $('det-opcoes'); box.textContent = ''; box.hidden = true;
+    $('det-mais-op').setAttribute('aria-expanded', 'false');
+    var ops = [];
+    if (st !== 'cancelado') {
+      D.etapasSeguintes(st).slice(1).forEach(function (e) { ops.push({ etapa: e, texto: 'Pular para ' + D.ROTULOS_ETAPA[e] }); });
+      if (ant) ops.push({ etapa: ant, texto: 'Voltar para ' + D.ROTULOS_ETAPA[ant] });
+      if (st !== 'entregue') ops.push({ etapa: 'cancelado', texto: 'Cancelar pedido', perigo: true });
+    }
+    ops.forEach(function (o) {
+      var b = el('button', 'btn mais peq' + (o.perigo ? ' perigo' : ''), o.texto); b.type = 'button';
+      b.addEventListener('click', function () { irParaEtapa(o.etapa); });
+      box.appendChild(b);
+    });
+    $('det-mais-op').hidden = !ops.length;
+  }
+  function irParaEtapa(etapa) {
+    var reg = regAberto(); if (!reg) return;
+    guardarEdicao();
+    if (etapa === 'cancelado') { pedirCancelar(reg); return; }
+    if (gravarLista(D.mudarEtapa(lerLista(), detChave, etapa, new Date()))) { desenharDetalhe(regAberto()); desenharHist(); }
+  }
+  $('det-avancar').addEventListener('click', function () { var e = $('det-avancar').dataset.acao; if (e) irParaEtapa(e); });
+  $('det-mais-op').addEventListener('click', function () {
+    var abrir = $('det-opcoes').hidden;
+    $('det-opcoes').hidden = !abrir; $('det-mais-op').setAttribute('aria-expanded', String(abrir));
+  });
+  /* Cancelar: pede confirmação; o registro fica na lista como Cancelado */
+  function pedirCancelar(reg) {
+    $('cancelar-txt').textContent = reg.status === 'pedido' ? 'O pedido fica na lista como Cancelado, para você consultar depois.'
+      : 'O pedido fica na lista como Cancelado e deixa de contar nas vendas. Você pode reabrir se mudar de ideia.';
+    var rec = D.situacaoPagamento(reg).recebido;
+    $('cancelar-devolvi').hidden = !(rec > 0);
+    if (rec > 0) {
+      $('cancelar-txt').textContent = 'O pedido fica como Cancelado. Os ' + moeda(rec) + ' já recebidos: ficaram com você ou você devolveu ao cliente?';
+      $('cancelar-sim').textContent = 'Ficou com você';
+    } else { $('cancelar-sim').textContent = 'Cancelar pedido'; }
+    $('folha-cancelar').hidden = false;
+  }
+  function fecharCancelar() { $('folha-cancelar').hidden = true; }
+  $('cancelar-nao').addEventListener('click', fecharCancelar);
+  $('cancelar-fundo').addEventListener('click', fecharCancelar);
+  function confirmarCancelar(devolveu) {
+    fecharCancelar();
+    if (!detChave) return;
+    if (gravarLista(D.cancelarPedido(lerLista(), detChave, devolveu, new Date()))) { desenharDetalhe(regAberto()); desenharHist(); avisar('Pedido cancelado'); }
+  }
+  $('cancelar-sim').addEventListener('click', function () { confirmarCancelar(false); });
+  $('cancelar-devolvi').addEventListener('click', function () { confirmarCancelar(true); });
+  $('det-ped-cancelar').addEventListener('click', function () { var reg = regAberto(); if (reg) { guardarEdicao(); pedirCancelar(reg); } });
+
+  /* Orçar este pedido: abre o Novo orçamento só com a quantidade preenchida (o resto da mesa é zerado para não misturar com outro orçamento) */
+  $('det-orcar').addEventListener('click', function () {
+    guardarEdicao();
+    var reg = regAberto(); if (!reg || reg.status !== 'pedido') return;
+    fecharSheetsHist();
+    limparMesa();
+    pedidoVinculo = { chave: D.chaveRegistro(reg), cliente: reg.cliente, descricao: reg.descricao };
+    eQtd.value = String(reg.qtd || 1);
+    atualizar(); desenharVinculoPedido();
+    irTarefa('orcar');
+  });
+
+  /* Anotar pedido */
+  var pedCanal = '';
+  function desenharCanalPedido() {
+    Array.prototype.forEach.call($('ped-canal').querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.canal === pedCanal)); });
+  }
+  Array.prototype.forEach.call($('ped-canal').querySelectorAll('button'), function (b) {
+    b.addEventListener('click', function () { pedCanal = pedCanal === b.dataset.canal ? '' : b.dataset.canal; desenharCanalPedido(); });
+  });
+  function abrirAnotarPedido() {
+    var lim = D.estadoLimite(lerLista());
+    if (lim.cheio) { avisar(lim.texto); return; }
+    $('ped-cliente').value = ''; $('ped-texto').value = ''; $('ped-qtd').value = '1'; $('ped-prazo').value = ''; pedCanal = ''; desenharCanalPedido();
+    $('folha-pedido').hidden = false;
+    $('ped-cliente').focus();
+  }
+  function fecharAnotarPedido() { $('folha-pedido').hidden = true; }
+  $('ped-novo').addEventListener('click', abrirAnotarPedido);
+  $('ped-fechar').addEventListener('click', fecharAnotarPedido);
+  $('ped-fundo').addEventListener('click', fecharAnotarPedido);
+  selecionarAoFocar($('ped-qtd'));
+  $('ped-salvar').addEventListener('click', function () {
+    var cliente = D.limparTexto($('ped-cliente').value, 60), texto = D.limparTexto($('ped-texto').value, D.MAX_TEXTO_PEDIDO);
+    if (!cliente && !texto) { avisar('Escreva o cliente ou o que foi pedido'); return; }
+    var lista = lerLista(), lim = D.estadoLimite(lista);
+    if (lim.cheio) { avisar(lim.texto); return; }
+    var reg = D.novoPedido({ cliente: cliente, texto: texto, qtd: C.lerQuantidade($('ped-qtd').value), prazoDesejado: $('ped-prazo').value, canal: pedCanal }, new Date());
+    if (!gravarLista(D.adicionarRegistro(lista, reg, D.MAX_REGISTROS))) return;
+    fecharAnotarPedido();
+    /* O pedido novo tem que aparecer na hora: limpa etapa, pagamento e busca (o período sempre inclui hoje) e destaca a linha */
+    histSituacao = ''; histPagamento = ''; histBusca = ''; $('hist-busca').value = ''; histLimite = 50;
+    destaqueChave = D.chaveRegistro(reg);
+    desenharHist(); window.scrollTo(0, 0);
+    avisar('Pedido anotado');
+  });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Escape') return;
+    if (!$('folha-cond').hidden) fecharCond(); else if (!$('folha-rec').hidden) fecharRec(); else if (!$('folha-cancelar').hidden) fecharCancelar(); else if (!$('folha-pedido').hidden) fecharAnotarPedido();
+  });
   function abrirDetalhe(reg) {
     detChave = D.chaveRegistro(reg);
     desenharDetalhe(reg);
@@ -1068,7 +1530,7 @@
     desenharHist();
   }
   function fecharDetalhe() { guardarEdicao(); folhaDet.hidden = true; detChave = null; }
-  function fecharSheetsHist() { folhaDet.hidden = true; folhaExcluir.hidden = true; detChave = null; }
+  function fecharSheetsHist() { folhaDet.hidden = true; folhaExcluir.hidden = true; $('folha-cancelar').hidden = true; $('folha-pedido').hidden = true; $('folha-cond').hidden = true; $('folha-rec').hidden = true; $('folha-cobrar').hidden = true; detChave = null; }
   $('det-fechar').addEventListener('click', fecharDetalhe);
   $('det-fundo').addEventListener('click', fecharDetalhe);
   ['det-cliente', 'det-peca'].forEach(function (id) { $(id).addEventListener('change', guardarEdicao); selecionarAoFocar($(id)); });
@@ -1077,6 +1539,7 @@
       var reg = regAberto();
       if (!reg || reg.status === b.dataset.st) return;
       guardarEdicao();
+      if (b.dataset.st === 'aprovado') { abrirCond(reg, 'aprovar'); return; }
       if (gravarLista(D.atualizarRegistro(lerLista(), detChave, { status: b.dataset.st }))) { desenharDetalhe(regAberto()); desenharHist(); }
     });
   });
@@ -1102,15 +1565,16 @@
   });
   $('det-excluir').addEventListener('click', function () {
     var reg = regAberto(); if (!reg) return;
-    $('excluir-txt').textContent = 'O orçamento Nº ' + C.formatarNumero(reg.n) + ' sai do histórico. O número dele não volta: o próximo orçamento continua de onde parou.';
+    $('excluir-txt').textContent = reg.status === 'pedido' ? 'O pedido sai da lista.' : 'O orçamento Nº ' + C.formatarNumero(reg.n) + ' sai da lista. O número dele não volta: o próximo orçamento continua de onde parou.';
     folhaExcluir.hidden = false;
   });
   function fecharExcluir() { folhaExcluir.hidden = true; }
+  function detTipoExcluido() { return 'Excluído'; }
   $('excluir-nao').addEventListener('click', fecharExcluir);
   $('excluir-fundo').addEventListener('click', fecharExcluir);
   $('excluir-sim').addEventListener('click', function () {
     if (!detChave) return;
-    if (gravarLista(D.excluirRegistro(lerLista(), detChave))) { fecharSheetsHist(); desenharHist(); avisar('Orçamento excluído'); }
+    if (gravarLista(D.excluirRegistro(lerLista(), detChave))) { fecharSheetsHist(); desenharHist(); avisar(detTipoExcluido()); }
   });
   document.addEventListener('keydown', function (ev) {
     if (ev.key !== 'Escape') return;
@@ -1126,7 +1590,7 @@
     var peca = reg.catalogoId ? D.acharPeca(lerCatalogo(), reg.catalogoId) : null;
     vinculo = peca ? { id: peca.id, nome: peca.nome } : null;
     atualizar();
-    sairConfig();
+    irParaOrcar();
     avisar(aviso || 'Dados do orçamento Nº ' + C.formatarNumero(reg.n) + ' na tela');
   }
   /* Põe na tela principal os campos de uma entrada (c = D.entradaParaCampos). Devolve um aviso, se algum filamento não existe mais. */
@@ -1341,13 +1805,13 @@
   $('cp-abrir').addEventListener('click', function () {
     var p = pedido && D.acharPeca(lerCatalogo(), pedido.id); if (!p) return;
     var aviso = pedidoNaTela(p, qtdPedido());
-    fecharPedido(); sairConfig();
+    fecharPedido(); irParaOrcar();
     avisar(aviso || 'Peça “' + (p.nome.length > 30 ? p.nome.slice(0, 29).trim() + '…' : p.nome) + '” na tela');   // o aviso é estreito: nome de até 120 letras vai abreviado
   });
   $('cp-enviar').addEventListener('click', function () {
     var p = pedido && D.acharPeca(lerCatalogo(), pedido.id); if (!p) return;
     pedidoNaTela(p, qtdPedido());
-    fecharPedido(); sairConfig();
+    fecharPedido(); irParaOrcar();
     abrirFolha(null);                // direto no painel de envio, com a descrição da peça já preenchida
   });
 
@@ -1396,7 +1860,6 @@
   var vTop = 'clientes';                       // Mais vendidos: 'clientes' | 'pecas'
   var ROTULO_PERIODO = { hoje: 'Hoje', '7': '7 dias', '30': '30 dias', mes: 'Este mês', tudo: 'Tudo' };
   var ROTULO_ANTERIOR = { '7': 'os 7 dias anteriores', '30': 'os 30 dias anteriores', mes: 'o mesmo período do mês passado' };
-  var origemHist = '';                         // 'vendas' = o Histórico foi aberto pelo painel (o voltar da tela volta ao painel)
   function pct(n) { return String(n).replace('.', ',') + '%'; }
   function rotuloEixo(v) { return /^\d{4}-\d{2}-\d{2}$/.test(v.chave) ? v.chave.slice(8) + '/' + v.chave.slice(5, 7) : v.rotulo; }
 
@@ -1483,30 +1946,32 @@
   Array.prototype.forEach.call(document.querySelectorAll('[data-top]'), function (b) {
     b.addEventListener('click', function () { vTop = b.dataset.top; if (ultimoPainel) desenharTop(ultimoPainel); });
   });
-  function abrirFila(sit) { histSituacao = sit; origemHist = 'vendas'; histLimite = 50; $('hist-busca').value = ''; histBusca = ''; trocarAba('historico'); }
+  var LISTAS = {
+    enviado: { titulo: 'Esperando resposta', situacao: 'enviado', vazio: 'Nenhum orçamento esperando resposta.' },
+    vencido: { titulo: 'Vencidos', situacao: 'vencido', vazio: 'Nenhum orçamento vencido.' },
+    pedido: { titulo: 'Pedidos para orçar', situacao: 'pedido', vazio: 'Nenhum pedido para orçar.' },
+    pronto: { titulo: 'Prontos para entregar', situacao: 'pronto', vazio: 'Nenhum pedido pronto.' },
+    aReceber: { titulo: 'A receber', aReceber: true, vazio: 'Nada a receber. Todos os pedidos aprovados estão pagos.' }
+  };
+  function abrirFila(sit) { abrirLista(LISTAS[sit] || { titulo: D.ROTULOS_ETAPA[sit] || 'Pedidos', situacao: sit }); }
   $('v-ag').addEventListener('click', function () { abrirFila('enviado'); });
   $('v-ve').addEventListener('click', function () { abrirFila('vencido'); });
-  $('v-vazio-btn').addEventListener('click', function () { origemHist = ''; histSituacao = ''; trocarAba('historico'); });
-  $('hist-ver-painel').addEventListener('click', function () { trocarAba('vendas'); });
-  Array.prototype.forEach.call(document.querySelectorAll('[data-aba]'), function (b) {
-    b.addEventListener('click', function () {
-      if (b.dataset.aba === 'vendas') trocarAba('vendas'); else { origemHist = ''; histSituacao = ''; trocarAba('historico'); }
-    });
-  });
+  $('v-vazio-btn').addEventListener('click', function () { histSituacao = ''; trocarAba('pedidos'); });
+  $('hist-ver-painel').addEventListener('click', function () { irTarefa('vendas'); });
 
   /* ---------- Configurações em lista e subtelas (0.5.3) ----------
      Todos os campos continuam no mesmo formulário (só mostrar/esconder): ir e voltar entre a lista e as subtelas não perde nada do que foi digitado. */
   var SUBS = { filamentos: 'Filamentos', custos: 'Custos', negocio: 'Meu negócio', backup: 'Backup e dados' };
   var telaAtual = '';
-  var subAberta = false;   // subtela aberta tocando na lista: há uma entrada a mais no histórico
   function subDaRota() { var m = /^#config-(\w+)$/.exec(location.hash); return m && SUBS[m[1]] ? m[1] : ''; }
   function mostrarSub(sub) {
     $('cfg-lista').hidden = !!sub;
     $('form-config').hidden = !sub || sub === 'backup';
     Array.prototype.forEach.call(document.querySelectorAll('#form-config [data-sub]'), function (s) { s.hidden = s.dataset.sub !== sub; });
     $('cartao-backup').hidden = sub !== 'backup';
-    $('cfg-titulo').textContent = sub ? SUBS[sub] : 'Configurações';
+    $('cfg-titulo').textContent = sub ? SUBS[sub] : 'Mais';
     $('cfg-trilha').hidden = !sub;
+    $('voltar').hidden = !sub;
     if (sub !== 'backup') fecharPaineisBackup();
   }
   /* Uma linha de resumo por área, calculada do que está na tela (inclui o que ainda não foi salvo) */
@@ -1523,6 +1988,11 @@
     if (logoPendente || (logoPendente === undefined && lerLogoSalvo())) partes.push('logo próprio');
     $('res-negocio').textContent = partes.length ? partes.join(' · ') : 'Ainda não preenchido: o orçamento usa o logo 3Di';
     $('res-backup').textContent = $('backup-titulo').textContent;
+    var todosCfg = lerLista(), lembCfg = D.precisaLembreteBackup(todosCfg, lerEstadoBackup()), limCfg = D.estadoLimite(todosCfg.length);
+    $('selo-backup').hidden = !(lembCfg.mostrar || limCfg.perto);
+    if (limCfg.perto) $('res-backup').textContent = limCfg.texto;
+    var pecas = lerCatalogo(), nPecas = Array.isArray(pecas) ? pecas.length : 0;
+    $('res-catalogo').textContent = nPecas ? nPecas + (nPecas === 1 ? ' peça salva' : ' peças salvas') : 'Nenhuma peça salva ainda';
   }
   /* Barra "Alterações não salvas · Salvar": aparece em qualquer parte de Configurações quando há algo digitado e não salvo */
   function atualizarBarraConfig() {
@@ -1533,20 +2003,93 @@
   ['input', 'change', 'click'].forEach(function (ev) {
     $('form-config').addEventListener(ev, function () { setTimeout(atualizarBarraConfig, 0); });
   });
-  Array.prototype.forEach.call(document.querySelectorAll('.cfg-item'), function (b) {
-    b.addEventListener('click', function () { subAberta = true; location.hash = 'config-' + b.dataset.sub; });
+  Array.prototype.forEach.call(document.querySelectorAll('.cfg-item[data-sub]'), function (b) {
+    b.addEventListener('click', function () { irTarefa('config-' + b.dataset.sub); });
+  });
+  /* Itens de Mais (e das telas provisórias) que abrem outra tela */
+  Array.prototype.forEach.call(document.querySelectorAll('.cfg-item[data-ir]'), function (b) {
+    b.addEventListener('click', function () {
+      var destino = b.dataset.ir;
+      sairDaConfig(function () {
+        irTarefa(destino);
+      });
+    });
   });
 
-  /* ---------- Navegação (o botão voltar do Android funciona) ---------- */
-  function telaDaRota() { return location.hash === '#config' || subDaRota() ? 'config' : location.hash === '#historico' ? 'hist' : location.hash === '#vendas' ? 'vendas' : location.hash === '#catalogo' ? 'cat' : 'calc'; }
-  /* Troca entre Lista e Vendas (e vai da fila do painel ao Histórico) sem empilhar tela: o voltar do Android continua levando à calculadora. */
-  function trocarAba(destino) { history.replaceState(null, '', location.pathname + location.search + '#' + destino); rota(); }
+  /* ---------- Navegação (o botão voltar do Android funciona) ----------
+     Quatro abas (Início, Pedidos, Negócio, Mais) trocam sem empilhar histórico, exceto a primeira saída de Início: assim o voltar de qualquer aba leva ao Início.
+     Telas de tarefa (Novo orçamento, Catálogo, Painel de vendas, Orçamentos, subtelas de Mais) empilham, ficam sem a barra de abas e voltam pela seta.
+     Cada entrada do histórico guarda { d: quantas entradas há acima do Início, aba: 1 se é uma aba aberta a partir do Início }. */
+  var BASE = location.pathname + location.search;
+  var TELA_DA_ROTA = { pedidos: 'hist', historico: 'hist', lista: 'hist', negocio: 'negocio', tarefas: 'tarefas', vendas: 'vendas', catalogo: 'cat', orcar: 'calc' };
+  function hashAtual() { return location.hash.replace(/^#/, ''); }
+  function profundidade() { var e = history.state; return e && typeof e.d === 'number' ? e.d : 0; }
+  function telaDaRota() {
+    var h = hashAtual();
+    if (h === 'config' || h === 'mais' || subDaRota()) return 'config';
+    return Object.prototype.hasOwnProperty.call(TELA_DA_ROTA, h) ? TELA_DA_ROTA[h] : 'inicio';   // rota desconhecida abre o Início
+  }
+  function abaDaTela(t, sub) { return t === 'inicio' || t === 'negocio' ? t : t === 'hist' ? (emLista() ? '' : 'pedidos') : t === 'config' && !sub ? 'mais' : ''; }
+  /* Troca entre Lista e Vendas (e vai da fila do painel ao Histórico) sem empilhar tela */
+  function trocarAba(destino) { history.replaceState(history.state, '', BASE + '#' + destino); rota(); }
+  function irTarefa(h) { history.pushState({ d: profundidade() + 1 }, '', BASE + '#' + h); rota(); }
+  function irInicio() {
+    var d = profundidade();
+    if (d > 0) history.go(-d); else { history.replaceState({ d: 0 }, '', BASE + '#inicio'); rota(); }
+  }
+  /* Seta "←": volta uma entrada; se a tela foi aberta direto (sem histórico), cai na tela indicada */
+  function voltarTarefa(fallback) {
+    if (profundidade() > 0) history.back();
+    else { history.replaceState({ d: 0 }, '', BASE + '#' + (fallback || 'inicio')); rota(); }
+  }
+  /* Abre o Novo orçamento no lugar da tela atual (vindo do histórico ou do catálogo): o voltar leva a onde se estava antes dela */
+  function irParaOrcar() { history.replaceState({ d: Math.max(1, profundidade()) }, '', BASE + '#orcar'); rota(); }
+  function irAba(h) {
+    if (h === 'orcar') { irTarefa('orcar'); return; }
+    var atual = abaDaTela(telaAtual, subDaRota());
+    if (h === atual) { window.scrollTo(0, 0); return; }     // tocar na aba aberta volta ao topo dela
+    if (h === 'inicio') { irInicio(); return; }
+    if (atual === 'inicio') history.pushState({ d: profundidade() + 1, aba: 1 }, '', BASE + '#' + h);
+    else history.replaceState(history.state, '', BASE + '#' + h);
+    rota();
+  }
+  /* Quem sai de Mais com alteração não salva escolhe: Salvar ou Descartar */
+  var depoisDeSair = null;
+  function sairDaConfig(acao) {
+    if ($('tela-config').hidden || !configAlterada()) { acao(); return; }
+    depoisDeSair = acao; $('folha-sair-cfg').hidden = false;
+  }
+  function fecharSairCfg() { $('folha-sair-cfg').hidden = true; depoisDeSair = null; }
+  $('sair-cfg-fundo').addEventListener('click', fecharSairCfg);
+  $('sair-cfg-descartar').addEventListener('click', function () {
+    var acao = depoisDeSair; fecharSairCfg();
+    logoPendente = undefined; configInicial = JSON.stringify(lerConfigTela());
+    if (acao) acao();
+  });
+  $('sair-cfg-salvar').addEventListener('click', function () {
+    var acao = depoisDeSair, ok = gravarConfigTela(); fecharSairCfg();
+    configInicial = JSON.stringify(lerConfigTela());
+    avisar(ok ? 'Configurações salvas' : 'Salvo só até fechar o app');
+    if (acao) acao();
+  });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !$('folha-sair-cfg').hidden) fecharSairCfg(); });
+
   function mostrar(tela, sub) {
+    fecharEnviado();
+    $('tela-inicio').hidden = tela !== 'inicio';
+    $('tela-negocio').hidden = tela !== 'negocio';
+    $('tela-tarefas').hidden = tela !== 'tarefas';
     $('tela-calc').hidden = tela !== 'calc';
     $('tela-config').hidden = tela !== 'config';
     $('tela-hist').hidden = tela !== 'hist';
     $('tela-vendas').hidden = tela !== 'vendas';
     $('tela-cat').hidden = tela !== 'cat';
+    var aba = abaDaTela(tela, sub);
+    $('abas').hidden = !aba;
+    document.body.classList.toggle('com-abas', !!aba);
+    Array.prototype.forEach.call(document.querySelectorAll('#abas [data-nav]'), function (b) {
+      if (b.dataset.nav === aba) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    });
     var entrando = telaAtual !== 'config';
     telaAtual = tela;
     if (tela === 'config') {
@@ -1554,36 +2097,232 @@
       desenharBackup(); mostrarSub(sub || ''); atualizarBarraConfig();
     } else { fecharPaineisBackup(); $('cfg-barra').hidden = true; }
     if (tela === 'hist') desenharHist(); else fecharSheetsHist();
+    if (tela === 'inicio') desenharInicio();
+    if (tela === 'negocio') desenharNegocio();
+    if (tela === 'tarefas') desenharTarefasTodas();
     if (tela === 'vendas') desenharVendas();
     if (tela === 'cat') { $('cat-busca').value = ''; desenharCat(); } else fecharPaineisCat();
     desenharVersao();
     window.scrollTo(0, 0);
   }
-  function rota() {
-    var t = telaDaRota();
-    if (t === 'calc') veioDaCalc = false;
-    if (!subDaRota()) subAberta = false;
-    mostrar(t, t === 'config' ? subDaRota() : '');
+  function rota() { var t = telaDaRota(); mostrar(t, t === 'config' ? subDaRota() : ''); ultimaEntrada = { estado: history.state, url: location.pathname + location.search + location.hash }; }
+  /* Voltar (Android/gesto) com painel aberto: fecha o painel e fica na mesma tela */
+  var ultimaEntrada = null;
+  function fecharPainelAberto() {
+    var ordem = [['folha-cond', fecharCond], ['folha-rec', fecharRec], ['folha-cobrar', fecharCobrar], ['folha-cancelar', fecharCancelar], ['folha-excluir', function () { $('folha-excluir').hidden = true; }],
+      ['folha-pedido', fecharAnotarPedido], ['folha-det', fecharDetalhe], ['folha', fecharFolha], ['folha-sair-cfg', fecharSairCfg], ['folha-cat-salvar', fecharPaineisCat], ['folha-cat-pedido', fecharPaineisCat], ['folha-cat-editar', fecharPaineisCat],
+      ['folha-restaurar', fecharPaineisBackup], ['folha-desfazer', fecharPaineisBackup]];
+    for (var i = 0; i < ordem.length; i++) if (!$(ordem[i][0]).hidden) { ordem[i][1](); if (ordem[i][0] === 'folha-cond' || ordem[i][0] === 'folha-rec') soltarChave(); return true; }
+    return false;
   }
+  window.addEventListener('popstate', function () {
+    if (ultimaEntrada && fecharPainelAberto()) history.pushState(ultimaEntrada.estado, '', ultimaEntrada.url);
+  });
   window.addEventListener('hashchange', rota);
-  var veioDaCalc = false;
-  function sairConfig() {
-    if (veioDaCalc) { var passos = subAberta ? 2 : 1; veioDaCalc = false; subAberta = false; history.go(-passos); }
-    else { history.replaceState(null, '', location.pathname + location.search); rota(); }
+
+  /* Quem abre o app direto numa rota que não é o Início (atalho, recarga sem histórico) ganha o Início por baixo, para o voltar funcionar */
+  (function normalizarEntrada() {
+    var h = hashAtual();
+    if (profundidade() > 0 || !h || h === 'inicio') return;
+    var t = telaDaRota(), sub = subDaRota(), aba = abaDaTela(t, sub);
+    history.replaceState({ d: 0 }, '', BASE + '#inicio');
+    if (t === 'inicio') return;
+    if (aba) history.pushState({ d: 1, aba: 1 }, '', BASE + '#' + aba);
+    else if (t === 'config') {
+      history.pushState({ d: 1, aba: 1 }, '', BASE + '#mais');
+      history.pushState({ d: 2 }, '', BASE + '#' + h);
+    } else history.pushState({ d: 1 }, '', BASE + '#' + h);
+  })();
+
+  Array.prototype.forEach.call(document.querySelectorAll('#abas [data-nav]'), function (b) {
+    b.addEventListener('click', function () { var destino = b.dataset.nav; sairDaConfig(function () { irAba(destino); }); });
+  });
+  $('voltar').addEventListener('click', function () { voltarTarefa('mais'); });
+  $('calc-voltar').addEventListener('click', function () { voltarTarefa('inicio'); });
+  $('vendas-voltar').addEventListener('click', function () { voltarTarefa('inicio'); });
+  $('tar-voltar').addEventListener('click', function () { voltarTarefa('inicio'); });
+  $('hist-voltar').addEventListener('click', function () { voltarTarefa('inicio'); });
+  $('cat-voltar').addEventListener('click', function () { voltarTarefa('mais'); });
+  $('cat-abrir').addEventListener('click', function () { irTarefa('catalogo'); });
+
+  /* Depois de enviar: aviso curto sobre o Novo orçamento (os campos continuam preenchidos) */
+  var timerEnviado;
+  function fecharEnviado() { clearTimeout(timerEnviado); $('env-aviso').hidden = true; }
+  function mostrarEnviado(numero, formato) {
+    if ($('tela-calc').hidden) return;
+    $('env-titulo').textContent = 'Orçamento Nº ' + C.formatarNumero(numero) + (formato === 'sem-envio' ? ' registrado' : ' enviado');
+    $('env-aviso').hidden = false;
+    clearTimeout(timerEnviado); timerEnviado = setTimeout(fecharEnviado, 6000);
   }
-  $('ir-config').addEventListener('click', function () { veioDaCalc = true; location.hash = 'config'; });
-  $('ir-hist').addEventListener('click', function () { veioDaCalc = true; histSituacao = ''; origemHist = ''; location.hash = 'historico'; });
-  $('voltar').addEventListener('click', function () {
-    if (!subDaRota()) { sairConfig(); return; }                 // na lista: sai de Configurações
-    if (subAberta) { subAberta = false; history.back(); }       // numa subtela: volta à lista
-    else { history.replaceState(null, '', location.pathname + location.search + '#config'); rota(); }
+  $('env-fundo').addEventListener('click', fecharEnviado);
+  $('env-inicio').addEventListener('click', function () { fecharEnviado(); irInicio(); });
+
+  /* ---------- Início: bloco de vendas, Pra fazer hoje, cobrar ---------- */
+  var CHAVE_OLHO = CHAVE + '-olho';      // '1' = valores escondidos
+  var MES_NOME = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  function olhoEscondido() { try { return localStorage.getItem(CHAVE_OLHO) === '1'; } catch (e) { return false; } }
+  function valorOlho(n) { return olhoEscondido() ? 'R$ ••••' : moeda(n); }
+  function achaPorChave(chave) {
+    var l = lerLista();
+    for (var i = 0; i < l.length; i++) if (D.chaveRegistro(l[i]) === chave) return l[i];
+    return null;
+  }
+  function linhaTarefa(t) {
+    var li = el('div', 'tarefa');
+    var txt = el('span', 'tarefa-txt', t.texto);
+    if (t.valor !== null && t.valor !== undefined) txt.appendChild(el('small', '', valorOlho(t.valor)));
+    var b = el('button', '', t.acao); b.type = 'button';
+    b.setAttribute('aria-label', t.acao + ': ' + t.texto);
+    b.addEventListener('click', function () { executarTarefa(t); });
+    li.appendChild(txt); li.appendChild(b);
+    return li;
+  }
+  function desenharListaTarefas(box, tarefas) {
+    box.textContent = '';
+    if (!tarefas.length) { box.appendChild(el('div', 'tarefa em-dia', '✓ Tudo em dia')); return; }
+    tarefas.forEach(function (t) { box.appendChild(linhaTarefa(t)); });
+  }
+  function desenharInicio() {
+    var todos = lerLista(), hoje = new Date(), pu = D.primeiroUso(todos, lerJSON(CHAVE));
+    var nome = config && config.negocio && config.negocio.nome ? config.negocio.nome : '';
+    $('ini-normal').hidden = pu.primeiroUso; $('ini-boas').hidden = !pu.primeiroUso;
+    $('ini-tarefas').hidden = pu.primeiroUso; $('ini-pronto').hidden = !pu.primeiroUso;
+    if (pu.primeiroUso) {
+      var cx = $('ini-pronto-lista'); cx.textContent = '';
+      pu.itens.forEach(function (it) {
+        var li = el('div', 'tarefa' + (it.feito ? ' feito' : ''));
+        li.appendChild(el('span', 'tarefa-txt', it.texto));
+        if (it.feito) { var ok = el('span', 'ok', '✓'); ok.setAttribute('aria-label', 'feito'); li.appendChild(ok); }
+        var b = el('button', '', it.feito ? 'Ver' : 'Abrir'); b.type = 'button';
+        b.addEventListener('click', function () { irTarefa(it.alvo); });
+        li.appendChild(b); cx.appendChild(li);
+      });
+      return;
+    }
+    var esc = olhoEscondido();
+    $('ini-ola').textContent = nome ? 'Olá, ' + nome : 'Olá!';
+    $('ini-olho').setAttribute('aria-pressed', String(esc));
+    $('ini-olho').setAttribute('aria-label', esc ? 'Mostrar valores' : 'Esconder valores');
+    $('olho-aberto').hidden = esc; $('olho-fechado').hidden = !esc;
+    var r = D.resumoVendas(todos, 'mes', hoje);
+    $('ini-rot').textContent = 'Vendas aprovadas · ' + MES_NOME[hoje.getMonth()];
+    $('ini-valor').textContent = valorOlho(r.vendas);
+    var partes = [];
+    if (r.qtd > 0 && r.variacao !== null) {
+      var n = Math.round(Math.abs(r.variacao));
+      partes.push(n === 0 ? 'igual ao mês passado' : (r.variacao < 0 ? '↓ ' : '↑ ') + (esc ? '••' : n) + '% ' + (r.variacao < 0 ? 'abaixo d' : 'sobre ') + 'o mesmo período do mês passado');
+    }
+    partes.push(r.qtd + (r.qtd === 1 ? ' venda' : ' vendas'));
+    $('ini-delta').textContent = partes.join(' · ');
+    $('ini-lucro').textContent = valorOlho(r.lucro);
+    var ts = D.tarefasHoje(todos, hoje, lerEstadoBackup());
+    $('ini-cont').textContent = ts.length ? String(ts.length) : '';
+    $('ini-ver-todas').hidden = ts.length <= 6;
+    desenharListaTarefas($('ini-lista'), ts.slice(0, 6));
+  }
+  function desenharTarefasTodas() { desenharListaTarefas($('tar-lista'), D.tarefasHoje(lerLista(), new Date(), lerEstadoBackup())); }
+  var inicioPronto = true;   // até aqui (abertura do app) as constantes do Início ainda não existem
+  function redesenharInicio() {
+    if (!inicioPronto) return;
+    if (!$('tela-inicio').hidden) desenharInicio();
+    if (!$('tela-tarefas').hidden) desenharTarefasTodas();
+    if (!$('tela-negocio').hidden) desenharNegocio();
+  }
+  function executarTarefa(t) {
+    var a = t.alvo || {};
+    if (a.tela === 'pedidos') {
+      var f = a.filtro || {};
+      var base = f.venceEm ? { titulo: 'Vencem hoje', vazio: 'Nenhum orçamento vence hoje.' }
+        : f.prazoVencido ? { titulo: 'Prazo vencido', vazio: 'Nenhum pedido com prazo vencido.' }
+        : LISTAS[f.situacao] || { titulo: D.ROTULOS_ETAPA[f.situacao] || 'Pedidos' };
+      abrirLista({ titulo: base.titulo, vazio: base.vazio, situacao: f.situacao || '', pagamento: f.pagamento || '', venceEm: f.venceEm || '', prazoVencido: !!f.prazoVencido });
+    } else if (a.tela === 'config-backup') irTarefa('config-backup');
+    else if (a.tela === 'cobrar') abrirCobrar(t.chave);
+    else if (a.tela === 'recebimento') {
+      var reg = achaPorChave(t.chave); if (!reg) return;
+      detChave = t.chave; desenharDetalhe(reg); abrirRec();
+    }
+  }
+  function alternarOlho() {
+    try { localStorage.setItem(CHAVE_OLHO, olhoEscondido() ? '0' : '1'); } catch (e) {}
+    if (!$('tela-inicio').hidden) desenharInicio(); else desenharNegocio();
+  }
+  $('ini-olho').addEventListener('click', alternarOlho);
+  $('neg-olho').addEventListener('click', alternarOlho);
+
+  /* ---------- Negócio ---------- */
+  function desenharNegocio() {
+    var todos = lerLista(), hoje = new Date(), r = D.resumoVendas(todos, histPeriodo, hoje), esc = olhoEscondido();
+    Array.prototype.forEach.call(document.querySelectorAll('[data-pern]'), function (b) { b.setAttribute('aria-pressed', String(b.dataset.pern === r.periodo)); });
+    $('neg-olho').setAttribute('aria-pressed', String(esc));
+    $('neg-olho').setAttribute('aria-label', esc ? 'Mostrar valores' : 'Esconder valores');
+    $('neg-olho-aberto').hidden = esc; $('neg-olho-fechado').hidden = !esc;
+    var per = ROTULO_PERIODO[r.periodo];
+    $('n-rot').textContent = 'Vendas aprovadas · ' + per;
+    $('n-valor').textContent = valorOlho(r.vendas);
+    var dv = $('n-delta');
+    if (r.qtd > 0 && r.variacao !== null) {
+      var n = Math.round(Math.abs(r.variacao)), base = ROTULO_ANTERIOR[r.periodo];
+      dv.className = 'v-delta' + (n === 0 ? ' igual' : r.variacao < 0 ? ' baixo' : '');
+      dv.textContent = n === 0 ? 'igual ' + base.replace(/^os /, 'aos ').replace(/^o /, 'ao ') : (r.variacao < 0 ? '↓ ' : '↑ ') + (esc ? '••' : n) + '% ' + (r.variacao < 0 ? 'abaixo d' : 'sobre ') + base;
+      dv.hidden = false;
+    } else dv.hidden = true;
+    $('n-stats').hidden = r.qtd === 0;
+    $('n-qtd').textContent = String(r.qtd); $('n-ticket').textContent = valorOlho(r.ticket);
+    $('n-lucro').textContent = valorOlho(r.lucro);
+    var antigos = r.aguardando.antigos;
+    $('n-ag-sub').textContent = !r.aguardando.qtd ? 'nenhum no momento' : antigos ? antigos + ' há ' + D.DIAS_ANTIGO + ' dias ou mais' : 'nenhum há ' + D.DIAS_ANTIGO + ' dias ou mais';
+    $('n-ag-valor').textContent = valorOlho(r.aguardando.total); $('n-ag-qtd').textContent = r.aguardando.qtd === 1 ? '1 orçamento' : r.aguardando.qtd + ' orçamentos'; $('n-ag').disabled = !r.aguardando.qtd;
+    $('n-ve-valor').textContent = valorOlho(r.vencidos.total); $('n-ve-qtd').textContent = r.vencidos.qtd === 1 ? '1 orçamento' : r.vencidos.qtd + ' orçamentos'; $('n-ve').disabled = !r.vencidos.qtd;
+    var ar = D.aReceber(todos), rec = D.recebidoNoPeriodo(todos, r.periodo, hoje);
+    $('n-receber-valor').textContent = valorOlho(ar.total);
+    $('n-receber-sub').textContent = (ar.qtd === 1 ? '1 pedido' : ar.qtd + ' pedidos') + ' · recebido (' + per + '): ' + valorOlho(rec.total);
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-pern]'), function (b) {
+    b.addEventListener('click', function () { mudarPeriodo(b.dataset.pern); });
   });
-  $('hist-voltar').addEventListener('click', function () {
-    if (origemHist === 'vendas') { origemHist = ''; histSituacao = ''; trocarAba('vendas'); } else sairConfig();   // aberto pela fila do painel: volta ao painel
+  $('n-painel').addEventListener('click', function () { irTarefa('vendas'); });
+  $('n-ag').addEventListener('click', function () { abrirFila('enviado'); });
+  $('n-ve').addEventListener('click', function () { abrirFila('vencido'); });
+  $('n-receber').addEventListener('click', function () {
+    abrirLista(LISTAS.aReceber);
   });
-  $('vendas-voltar').addEventListener('click', sairConfig);
-  $('cat-voltar').addEventListener('click', sairConfig);
-  $('cat-abrir').addEventListener('click', function () { veioDaCalc = true; location.hash = 'catalogo'; });
+  $('ini-vendas-btn').addEventListener('click', function () { irAba('negocio'); });
+  $('ini-fazer').addEventListener('click', function () { irTarefa('orcar'); });
+  $('ini-ver-todas').addEventListener('click', function () { irTarefa('tarefas'); });
+
+  /* Cobrar resposta: mensagem pronta e editável, compartilhada pelo celular (ou copiada) */
+  var cobChave = null;
+  function abrirCobrar(chave) {
+    var reg = achaPorChave(chave); if (!reg) return;
+    cobChave = chave;
+    $('cob-info').textContent = (reg.cliente || 'Sem cliente') + ' · Nº ' + C.formatarNumero(reg.n) + ' · enviado em ' + dm(reg.ts) + ' · ' + moeda(reg.total);
+    $('cob-msg').value = D.mensagemCobranca(reg);
+    $('folha-cobrar').hidden = false;
+  }
+  function fecharCobrar() { $('folha-cobrar').hidden = true; }
+  $('cob-fechar').addEventListener('click', fecharCobrar);
+  $('cob-fundo').addEventListener('click', fecharCobrar);
+  function cobrancaFeita(msg) {
+    if (cobChave) gravarLista(D.registrarCobranca(lerLista(), cobChave, new Date()));
+    fecharCobrar(); avisar(msg);
+  }
+  $('cob-enviar').addEventListener('click', function () {
+    var texto = $('cob-msg').value.trim(); if (!texto) { avisar('Escreva a mensagem'); return; }
+    if (navigator.share) { navigator.share({ text: texto }).then(function () { cobrancaFeita('Cobrança registrada'); }, function () {}); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto).then(function () { cobrancaFeita('Mensagem copiada'); }, function () { avisar('Não deu para copiar'); });
+    } else avisar('Este aparelho não deixa compartilhar nem copiar');
+  });
+  $('cob-aprovado').addEventListener('click', function () {
+    var reg = achaPorChave(cobChave); if (!reg) return;
+    fecharCobrar(); detChave = cobChave; desenharDetalhe(reg); abrirCond(reg, 'aprovar');
+  });
+  $('cob-recusado').addEventListener('click', function () {
+    if (!cobChave) return;
+    var ok = gravarLista(D.atualizarRegistro(lerLista(), cobChave, { status: 'recusado' }));
+    fecharCobrar(); if (ok) avisar('Orçamento recusado');
+  });
 
   /* ---------- Convite para instalar ---------- */
   var instalado = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
@@ -1616,7 +2355,7 @@
 
   /* ---------- Versão e aviso de nova versão ---------- */
   /* Novidades por MAJOR.MINOR (o sufixo -teste.N do staging é ignorado na busca). */
-  var NOVIDADES = { '0.4': 'histórico, backup e catálogo', '0.5': 'painel de vendas' };
+  var NOVIDADES = { '0.4': 'histórico, backup e catálogo', '0.5': 'painel de vendas', '0.6': 'início novo, pedidos com etapas e pagamentos' };
   var CHAVE_VISTA = CHAVE + '-versao-vista';
   var CHAVE_RETOMAR = CHAVE + '-retomar';
   var versaoEmUso = C.lerVersao(AMB.versao) ? AMB.versao : '';   // lida de config-ambiente.js (a que esta tela carregou)
@@ -1639,7 +2378,8 @@
   function estadoParaRetomar() {
     return { peso: ePeso.value, tempo: eTempo.value, qtd: eQtd.value, extras: eExtras.value, margem: eMargem.value, outra: outraAberta,
       multicor: multicorAtivo, cores: cores.map(function (c) { return { id: c.id, g: c.g }; }), purga: purgaTxt,
-      vinculo: vinculo ? { id: vinculo.id, nome: vinculo.nome } : null };
+      vinculo: vinculo ? { id: vinculo.id, nome: vinculo.nome } : null,
+      pedido: pedidoVinculo ? { chave: pedidoVinculo.chave, cliente: pedidoVinculo.cliente, descricao: pedidoVinculo.descricao } : null };
   }
   function retomarCampos() {
     var d = null;
@@ -1650,6 +2390,7 @@
     eMargem.value = txt(d.margem) || String(C.PADROES.margemPct);
     outraAberta = d.outra === true;
     purgaTxt = txt(d.purga);
+    if (d.pedido && typeof d.pedido.chave === 'string' && d.pedido.chave) pedidoVinculo = { chave: txt(d.pedido.chave), cliente: D.limparTexto(d.pedido.cliente, 60), descricao: D.limparTexto(d.pedido.descricao, 120) };
     if (d.vinculo && typeof d.vinculo.id === 'string' && d.vinculo.id) vinculo = { id: txt(d.vinculo.id), nome: D.limparTexto(d.vinculo.nome, D.NOME_PECA_MAX) };
     if (d.multicor === true && Array.isArray(d.cores) && d.cores.length) {
       multicorAtivo = true;
@@ -1732,10 +2473,15 @@
   }
 
   /* ---------- Início ---------- */
+  (function migrarVendas() {   // 0.6.0: quem já estava aprovado ganha a data fixa da venda (aprovadoEm = data da última mudança)
+    var l = lerLista();
+    for (var i = 0; i < l.length; i++) if (D.ehVenda(l[i].status) && !l[i].aprovadoEm) { gravarLista(D.migrarAprovadoEm(l)); return; }
+  })();
   retomarCampos();            // devolve o que estava na tela antes de "Atualizar" (uma única vez)
   validarVinculo();           // a peça do catálogo ainda existe? (o nome mostrado vem do catálogo)
   montarSeletor();
   if (multicorAtivo) aplicarModoMulticor();
+  desenharVinculoPedido();
   rota();
   atualizar();
   avisarSeAtualizou();

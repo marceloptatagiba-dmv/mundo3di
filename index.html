@@ -275,6 +275,7 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
 .chip{flex:1;min-width:0;height:36px;padding:0 6px;border-radius:999px;border:1.5px solid var(--borda);background:#fff;font-size:13px;font-weight:700;white-space:nowrap}
 .chip[aria-pressed="true"]{background:var(--preto);border-color:var(--preto);color:#fff}
 .chip.claro{flex:none;height:32px;font-size:12px;font-weight:600;padding:0 12px;background:var(--fundo);border-color:var(--linha);max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.chip.claro[aria-pressed="true"]{background:var(--verde);border-color:var(--verde);color:#fff}
 .chips.clientes{flex-wrap:wrap}
 .chips[hidden]{display:none}
 .chips.sit .chip{font-size:12px;padding:0 4px}
@@ -384,25 +385,272 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
 .salvo-box .tag{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--suave)}
 .salvo-box strong{font-size:14px;font-weight:700}
 .salvo-box span{font-size:12px;font-weight:500;color:var(--suave)}
+/* ---- Abas e navegação (v6) ---- */
+.abas{position:fixed;left:0;right:0;bottom:0;z-index:5;max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:#fff;border-top:1px solid var(--linha);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+.abas[hidden]{display:none}
+.icone[hidden]{display:none}
+.abas button{min-height:48px;border:0;background:none;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:700;color:var(--suave)}
+.abas button[aria-current="page"]{color:var(--verde-texto)}
+.abas .mais-btn{width:46px;height:46px;margin-top:-20px;border-radius:50%;background:var(--verde);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.22)}
+.abas .orcar{color:var(--verde-texto)}
+body.com-abas main{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+body.com-abas .barra{bottom:calc(64px + env(safe-area-inset-bottom))}
+.cfg-grupo{margin:6px 0 -2px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--suave)}
+.cfg-grupo:first-child{margin-top:0}
+.env-aviso{position:fixed;inset:0;z-index:15;display:flex;align-items:flex-end;justify-content:center;padding:16px calc(16px + env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
+.env-aviso[hidden]{display:none}
+.env-fundo{position:absolute;inset:0}
+.env-caixa{position:relative;width:100%;max-width:448px;background:var(--preto);color:#fff;border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.env-caixa p{margin:0;display:flex;flex-direction:column;gap:4px}
+.env-caixa strong{font-size:15px;font-weight:800}
+.env-caixa span{font-size:12.5px;font-weight:500;color:var(--suave-escuro)}
+.env-caixa .btn.principal{height:48px;font-size:16px}
+.btn-ped{height:44px;padding:0 16px;border:0;border-radius:12px;background:var(--verde);color:#fff;font-size:14px;font-weight:800;flex-shrink:0}
+#tela-hist header{gap:12px}
+.chips.sit{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin:0 -20px;padding:0 20px}
+.chips.sit::-webkit-scrollbar{display:none}
+.chips.sit .chip{flex:none;padding:0 12px}
+.pill.pedido{background:#E3EEFB;color:#1F4E8C}
+.pill.producao,.pill.embalagem{background:#ECE8F7;color:#4F3A8C}
+.pill.pronto{background:#3D8203;color:#fff}
+.pill.entregue{background:#fff;color:#4A524A;box-shadow:inset 0 0 0 1.5px var(--borda)}
+.pill.cancelado{background:#F7E4DB;color:#8F2F08}
+.seg.seg4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.seg.seg4 button{font-size:12px}
+.caixa.area{height:auto;padding:6px 14px;align-items:stretch}
+.caixa.area textarea{flex:1;min-width:0;border:0;outline:0;background:transparent;font:inherit;font-size:16px;font-weight:600;padding:4px 0;resize:none;color:inherit}
+.caixa.area textarea::placeholder{color:#A9B1A5;font-weight:500}
+.nota-pedido{margin:0;padding:10px 12px;border-radius:12px;background:var(--fundo);font-size:13px;font-weight:500;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;max-height:96px;overflow:auto}
+.nota-pedido[hidden],.campo[hidden]{display:none}
+.grade2[hidden],.btn[hidden],.linha[hidden],.interno[hidden],.pill[hidden]{display:none}
+.linha-etapa{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.opcoes-etapa{display:flex;flex-direction:column;gap:8px}
+.opcoes-etapa[hidden]{display:none}
+.selo-pedido{align-items:center}
+.selo-pedido button{width:28px;height:28px;border:0;background:#E3EEFB;color:#1F4E8C;border-radius:50%;font-size:16px;font-weight:800;line-height:1;padding:0;flex-shrink:0}
+.selo-pedido span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1F4E8C;font-weight:700}
+.pills{display:flex;gap:4px;justify-content:flex-end;align-items:center}
+.pill-pag{display:inline-flex;align-items:center;height:22px;padding:0 8px 0 6px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;background:#fff;color:#8A4B04;box-shadow:inset 0 0 0 1.5px #C27A0E}
+.pill-pag::before{content:"$";display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;margin-right:4px;border:1.5px solid currentColor;border-radius:50%;font-size:8px;font-weight:800;line-height:1}
+.pill-pag.pago{color:#2F6402;box-shadow:inset 0 0 0 1.5px #3D8203}
+.pill-pag[hidden]{display:none}
+.chip.pag[aria-pressed="false"]{border-color:#C27A0E;color:#8A4B04}
+.chip.pag[data-pag="pago"][aria-pressed="false"]{border-color:#3D8203;color:#2F6402}
+.chips.sit .chip{display:inline-flex;align-items:center;justify-content:center}
+.chip .n{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;margin-left:6px;border-radius:9px;box-sizing:border-box;font-size:11px;font-weight:800;line-height:1;background:#1F4E8C;color:#fff}
+.chip[data-grupo="hist"] .n{background:var(--suave)}
+.chip.pag .n{background:#8A4B04}
+.chip.pag[data-pag="pago"] .n{background:var(--verde)}
+.chip[aria-pressed="true"] .n{background:#fff;color:var(--preto)}
+.chip.zero[aria-pressed="false"]{color:#6B746B;border-color:var(--linha)}
+.chips.sit .traco{flex:none;width:1px;height:24px;background:var(--borda);margin:0 4px;align-self:center}
+.btn-ped[hidden]{display:none}
+.receber-cartao{gap:6px}
+.receber-cartao[hidden]{display:none}
+.receber-cartao .rot{font-size:12px;font-weight:600;color:var(--suave)}
+.receber-cartao b{font-size:28px;font-weight:800;color:#8A4B04}
+.hr-rodape{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--linha);font-size:12px;font-weight:600;color:var(--suave)}
+.linha-rec{display:flex;align-items:center;border-top:1px solid var(--linha);background:#fff}
+.linha-rec:first-child{border-top:0}
+.linha-rec .item{border-top:0;flex:1;min-width:0}
+.linha-rec .falta-rot{font-size:11px;font-weight:600;color:var(--suave)}
+.btn-recebi{flex:none;height:40px;padding:0 12px;margin-right:12px;border:0;border-radius:10px;background:var(--verde);color:#fff;font-size:13px;font-weight:800}
+.item.novo{animation:destaque 2.6s ease-out}
+@keyframes destaque{0%,55%{background:#EEF6E6;box-shadow:inset 0 0 0 2px var(--verde)}100%{background:#fff;box-shadow:inset 0 0 0 0 transparent}}
+.se-abrir{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:52px;padding:8px 0 0;border:0;border-top:1px solid var(--linha);background:none;text-align:left;color:var(--verde-texto)}
+.se-abrir[hidden]{display:none}
+.se-abrir span{display:flex;flex-direction:column;gap:2px}
+.se-abrir b{font-size:14px;font-weight:700}
+.se-abrir small{font-size:11.5px;font-weight:600;color:var(--suave)}
+.se-abrir svg{flex-shrink:0;transition:transform .15s}
+.se-abrir[aria-expanded="true"] svg{transform:rotate(180deg)}
+#painel-sem-envio[hidden]{display:none}
+.chips.formas .chip{height:40px;font-size:13px;padding:0 14px}
+.chips.formas .chip[aria-pressed="true"]::before{content:"✓ "}
+.faixa-aviso{display:flex;align-items:flex-start;gap:8px;background:#FFF3C4;border-radius:12px;padding:10px 6px 10px 12px;color:#4A3A00}
+.faixa-aviso[hidden]{display:none}
+.faixa-aviso p{margin:0;flex:1;font-size:12.5px;font-weight:500;line-height:1.45}
+.faixa-aviso button{flex:none;width:36px;height:36px;margin:-6px 0 0;border:0;background:none;font-size:20px;line-height:1;color:#4A3A00}
+.pg-bloco{flex:none;border:1.5px solid var(--borda);border-radius:12px;overflow:hidden}
+.pg-abrir{display:flex;align-items:center;gap:10px;width:100%;min-height:60px;padding:10px 12px;border:0;background:var(--campo);text-align:left;color:var(--preto)}
+.pg-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.pg-txt b{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:13px;font-weight:800}
+.pg-txt small{font-size:11.5px;font-weight:600;color:var(--suave);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-selo{font-style:normal;font-size:10px;font-weight:800;padding:2px 6px;border-radius:999px;background:#FFF3C4;color:#6B4A00}
+.pg-selo[hidden]{display:none}
+.pg-acao{flex:none;font-size:13px;font-weight:800;color:var(--verde-texto)}
+.pg-painel{padding:12px;border-top:1px solid var(--linha)}
+.pg-rodape{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;font-weight:500;color:var(--suave)}
+.pg-rodape button{flex:none;min-height:36px;border:0;background:none;padding:0;font-size:12px;font-weight:800;color:var(--verde-texto)}
+.pg-rodape button[hidden]{display:none}
+.recs{display:flex;flex-direction:column;gap:4px}
+.rec-linha{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;min-height:32px}
+.rec-linha span{flex:1;min-width:0}
+.rec-linha .neg{color:#8F2F08}
+.rec-linha button{height:32px;padding:0 10px;border:1.5px solid var(--borda);border-radius:10px;background:#fff;font-size:12px;font-weight:700;color:var(--suave)}
+.rec-linha button.certeza{border-color:#E9C9B8;color:#A3360A}
+.ini{gap:14px}
+.ini-bloco{background:#0E0F10;color:#fff;border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.ini-topo{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ini-ola{font-size:14px;font-weight:600;color:#D5DCCF;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ini-olho{flex-shrink:0;width:44px;height:44px;margin:-6px -8px -6px 0;display:flex;align-items:center;justify-content:center;border:1.5px solid #3A403A;border-radius:14px;background:none;color:#fff}
+.ini-olho svg[hidden]{display:none}
+.ini-vendas{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:0;background:none;padding:0;color:#fff;text-align:left}
+.ini-rot{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#B9C2B3}
+.ini-vendas strong{font-size:32px;font-weight:800;line-height:1.15}
+.ini-delta{font-size:13px;font-weight:700;color:#7CC12A}
+.ini-delta:empty{display:none}
+.ini-lucro{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding-top:10px;border-top:1px solid #2A2F2A;font-size:13px;font-weight:600;color:#D5DCCF}
+.ini-lucro b{font-size:16px;color:#fff}
+#ini-boas{display:flex;flex-direction:column;gap:8px}
+#ini-boas[hidden]{display:none}
+.ini-boas-tit{font-size:20px;font-weight:800;line-height:1.25}
+#ini-boas p{margin:0;font-size:13.5px;line-height:1.45;color:#D5DCCF}
+.ini-fazer{height:48px;border:0;border-radius:14px;background:#7CC12A;color:#0E0F10;font-size:16px;font-weight:800}
+.ini-sec{display:flex;flex-direction:column;gap:8px}
+.ini-sec[hidden]{display:none}
+.ini-tit{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ini-tit h2{margin:0;font-size:16px;font-weight:800}
+.ini-n{display:inline-block;min-width:20px;padding:0 6px;margin-left:4px;border-radius:999px;background:#E8F2DC;color:var(--verde-texto);font-size:12px;font-weight:800;text-align:center}
+.ini-n:empty{display:none}
+.tarefas{display:flex;flex-direction:column;gap:8px}
+.tarefa{display:flex;align-items:center;gap:10px;min-height:60px;padding:8px 8px 8px 14px;background:#fff;border:1.5px solid var(--borda);border-radius:16px}
+.tarefa-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;font-size:14px;font-weight:700;line-height:1.3}
+.tarefa-txt small{font-size:13px;font-weight:800;color:var(--verde-texto)}
+.tarefa button{flex-shrink:0;height:44px;min-width:64px;padding:0 14px;border:1.5px solid var(--verde);border-radius:12px;background:#fff;color:var(--verde-texto);font-size:14px;font-weight:800}
+.tarefa.em-dia{padding:14px;font-size:14px;font-weight:700;color:var(--verde-texto)}
+.tarefa.feito .tarefa-txt{color:var(--suave)}
+.tarefa .ok{flex-shrink:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:var(--verde-texto)}
+.neg-olho{margin:0;border-color:var(--borda);color:var(--preto);background:#fff}
+.n-lucro{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:6px;padding-top:10px;border-top:1px solid var(--linha);font-size:13px;font-weight:600;color:var(--suave)}
+.n-lucro b{font-size:16px;color:var(--preto)}
+.n-mosaico{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.n-peca{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px;background:#fff;border:1.5px solid var(--borda);border-radius:16px;text-align:left;color:var(--preto)}
+.n-peca strong{font-size:15px;font-weight:800}
+.n-peca>span:not(.cfg-ico){font-size:12px;font-weight:500;line-height:1.3;color:var(--suave)}
+.n-peca-valor{font-size:18px;font-weight:800;color:#8A4B04}
+.selo-fazer{flex-shrink:0;padding:3px 10px;border-radius:999px;background:#FBEBD0;color:#8A4B04;font-size:12px;font-weight:800}
+.selo-fazer[hidden]{display:none}
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- TELA: ORÇAMENTO -->
-  <section class="tela" id="tela-calc" aria-label="Orçamento">
+  <!-- TELA: INÍCIO -->
+  <section class="tela" id="tela-inicio" aria-label="Início">
     <header>
       <div class="marca">
         <img src="img/logo-3di.png" alt="3Di" width="77" height="46">
         <div><strong>Mundo 3Di</strong><span></span></div>
       </div>
-      <div class="icones">
-      <button class="icone novo" type="button" id="ir-hist" aria-label="Orçamentos enviados">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+    </header>
+    <main class="ini">
+      <section class="ini-bloco" id="ini-bloco" aria-label="Resumo do mês">
+        <div id="ini-normal">
+          <div class="ini-topo">
+            <span class="ini-ola" id="ini-ola">Olá!</span>
+            <button class="ini-olho" type="button" id="ini-olho" aria-label="Esconder valores" aria-pressed="false">
+              <svg id="olho-aberto" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg id="olho-fechado" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10 10 0 0 0 4.4-1"/></svg>
+            </button>
+          </div>
+          <button class="ini-vendas" type="button" id="ini-vendas-btn">
+            <span class="ini-rot" id="ini-rot"></span>
+            <strong id="ini-valor">R$ 0,00</strong>
+            <span class="ini-delta" id="ini-delta"></span>
+          </button>
+          <div class="ini-lucro"><span>Lucro estimado · só você vê</span><b id="ini-lucro">R$ 0,00</b></div>
+        </div>
+        <div id="ini-boas" hidden>
+          <strong class="ini-boas-tit">Seu primeiro orçamento em 10 segundos</strong>
+          <p>Peso e tempo do fatiador, e o valor aparece na hora. Funciona sem internet e sem cadastro.</p>
+          <button class="ini-fazer" type="button" id="ini-fazer">Fazer um orçamento</button>
+        </div>
+      </section>
+      <section class="ini-sec" id="ini-tarefas" aria-label="Pra fazer hoje">
+        <div class="ini-tit"><h2>Pra fazer hoje <span class="ini-n" id="ini-cont"></span></h2><button class="link-versao" type="button" id="ini-ver-todas" hidden>Ver todas</button></div>
+        <div class="tarefas" id="ini-lista"></div>
+      </section>
+      <section class="ini-sec" id="ini-pronto" aria-label="Deixe pronto quando puder" hidden>
+        <div class="ini-tit"><h2>Deixe pronto quando puder</h2></div>
+        <div class="tarefas" id="ini-pronto-lista"></div>
+      </section>
+    </main>
+  </section>
+
+  <!-- TELA: PRA FAZER HOJE (lista completa) -->
+  <section class="tela" id="tela-tarefas" aria-label="Pra fazer hoje" hidden>
+    <header>
+      <button class="icone" type="button" id="tar-voltar" aria-label="Voltar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
       </button>
-      <button class="icone" type="button" id="ir-config" aria-label="Configurações">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+      <h1>Pra fazer hoje</h1>
+    </header>
+    <main><div class="tarefas" id="tar-lista"></div></main>
+  </section>
+
+  <!-- TELA: NEGÓCIO -->
+  <section class="tela" id="tela-negocio" aria-label="Negócio" hidden>
+    <header>
+      <h1>Negócio</h1>
+      <button class="ini-olho neg-olho" type="button" id="neg-olho" aria-label="Esconder valores" aria-pressed="false">
+        <svg id="neg-olho-aberto" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+        <svg id="neg-olho-fechado" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M3 3l18 18"/><path d="M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4"/><path d="M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10 10 0 0 0 4.4-1"/></svg>
       </button>
+    </header>
+    <main>
+      <div class="chips" role="group" aria-label="Período">
+        <button class="chip" type="button" data-pern="hoje" aria-pressed="false">Hoje</button>
+        <button class="chip" type="button" data-pern="7" aria-pressed="false">7 dias</button>
+        <button class="chip" type="button" data-pern="30" aria-pressed="true">30 dias</button>
+        <button class="chip" type="button" data-pern="mes" aria-pressed="false">Mês</button>
+        <button class="chip" type="button" data-pern="tudo" aria-pressed="false">Tudo</button>
+      </div>
+      <section class="v-cartao" aria-label="Vendas aprovadas" aria-live="polite">
+        <div class="v-rot" id="n-rot">Vendas aprovadas</div>
+        <div class="v-valor" id="n-valor">R$ 0,00</div>
+        <div class="v-delta" id="n-delta" hidden></div>
+        <div class="v-stats" id="n-stats" hidden>
+          <div><b id="n-qtd">0</b><span>vendas aprovadas</span></div>
+          <div><b id="n-ticket">R$ 0,00</b><span>ticket médio</span></div>
+        </div>
+        <div class="n-lucro"><span>Lucro estimado · só você vê</span><b id="n-lucro">R$ 0,00</b></div>
+      </section>
+      <section class="v-cartao v-fila" aria-label="Esperando resposta e vencidos">
+        <button type="button" class="v-linha" id="n-ag">
+          <span><strong>Esperando resposta</strong><small id="n-ag-sub"></small></span>
+          <span class="v-dir"><b id="n-ag-valor">R$ 0,00</b><small id="n-ag-qtd"></small></span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A524A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        </button>
+        <button type="button" class="v-linha" id="n-ve">
+          <span><strong class="ambar">Vencidos</strong><small>validade já passou</small></span>
+          <span class="v-dir"><b id="n-ve-valor">R$ 0,00</b><small id="n-ve-qtd"></small></span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A524A" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        </button>
+      </section>
+      <p class="cfg-grupo">Gestão</p>
+      <div class="n-mosaico">
+        <button class="n-peca" type="button" id="n-painel">
+          <span class="cfg-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></span>
+          <strong>Painel de vendas</strong><span>Gráfico por dia e mais vendidos</span>
+        </button>
+        <button class="n-peca" type="button" id="n-receber">
+          <span class="cfg-ico"><b>R$</b></span>
+          <strong>A receber</strong><b class="n-peca-valor" id="n-receber-valor">R$ 0,00</b><span id="n-receber-sub"></span>
+        </button>
+      </div>
+    </main>
+  </section>
+
+  <!-- TELA: ORÇAMENTO -->
+  <section class="tela" id="tela-calc" aria-label="Novo orçamento" hidden>
+    <header>
+      <button class="icone" type="button" id="calc-voltar" aria-label="Voltar">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      </button>
+      <div class="titulo-config">
+        <h1 id="calc-titulo">Novo orçamento</h1>
+        <div class="versao-cab selo-pedido" id="calc-sub" hidden><span id="calc-sub-txt"></span><button type="button" id="pedido-desvincular" aria-label="Desvincular o pedido">×</button></div>
       </div>
     </header>
 
@@ -502,20 +750,31 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
   </section>
 
   <!-- TELA: CONFIGURAÇÕES -->
-  <section class="tela" id="tela-config" aria-label="Configurações" hidden>
+  <section class="tela" id="tela-config" aria-label="Mais" hidden>
     <header>
-      <button class="icone" type="button" id="voltar" aria-label="Voltar">
+      <button class="icone" type="button" id="voltar" aria-label="Voltar" hidden>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
       </button>
       <div class="titulo-config">
-        <h1 id="cfg-titulo">Configurações</h1>
-        <div class="versao-cab" id="cfg-trilha" hidden>Configurações</div>
+        <h1 id="cfg-titulo">Mais</h1>
+        <div class="versao-cab" id="cfg-trilha" hidden>Mais</div>
       </div>
     </header>
 
     <main>
       <div class="cfg-lista" id="cfg-lista">
-        <p class="intro">Estes valores ficam salvos neste celular e valem para todos os cálculos.</p>
+        <p class="cfg-grupo">Seu negócio</p>
+        <button class="cfg-item" type="button" data-ir="catalogo">
+          <span class="cfg-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5V5a2 2 0 0 1 2-2h14v16H6.5A2.5 2.5 0 0 0 4 21.5"/><path d="M20 19v3H6.5"/></svg></span>
+          <span class="cfg-txt"><strong>Catálogo</strong><span id="res-catalogo"></span></span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        </button>
+        <button class="cfg-item" type="button" data-sub="negocio">
+          <span class="cfg-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9l1.5-5h13L20 9M4 9h16M4 9v11h16V9M10 20v-5h4v5"/></svg></span>
+          <span class="cfg-txt"><strong>Meu negócio</strong><span id="res-negocio"></span></span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        </button>
+        <p class="cfg-grupo">Custos e materiais</p>
         <button class="cfg-item" type="button" data-sub="filamentos">
           <span class="cfg-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/></svg></span>
           <span class="cfg-txt"><strong>Filamentos</strong><span id="res-filamentos"></span></span>
@@ -526,14 +785,11 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
           <span class="cfg-txt"><strong>Custos</strong><span id="res-custos"></span></span>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
         </button>
-        <button class="cfg-item" type="button" data-sub="negocio">
-          <span class="cfg-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9l1.5-5h13L20 9M4 9h16M4 9v11h16V9M10 20v-5h4v5"/></svg></span>
-          <span class="cfg-txt"><strong>Meu negócio</strong><span id="res-negocio"></span></span>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
-        </button>
+        <p class="cfg-grupo">Dados</p>
         <button class="cfg-item" type="button" data-sub="backup">
           <span class="cfg-ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v10M8 10l4 4 4-4M5 19h14"/></svg></span>
           <span class="cfg-txt"><strong>Backup e dados</strong><span id="res-backup"></span></span>
+          <span class="selo-fazer" id="selo-backup" hidden>Fazer</span>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
         </button>
         <p class="cfg-versao"><span id="versao-uso"></span><button class="link-versao" type="button" id="versao-atualizar" hidden></button></p>
@@ -660,8 +916,20 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
         <label class="campo"><span>Prazo de entrega padrão</span>
           <span class="caixa texto"><input id="neg-prazo" type="text" maxlength="40" autocomplete="off" placeholder="Ex.: 5 dias úteis"></span>
         </label>
-        <label class="campo"><span>Formas de pagamento</span>
-          <span class="caixa texto"><input id="neg-pagamento" type="text" maxlength="80" autocomplete="off" placeholder="Ex.: Pix ou cartão em até 3x"></span>
+        <!-- Desde o 0.6.0-teste.14: formas de pagamento em chips, chave Pix e aviso único de conversão do texto antigo -->
+        <div class="faixa-aviso" id="neg-aviso-pag" hidden><p id="neg-aviso-pag-txt"></p><button type="button" id="neg-aviso-pag-fechar" aria-label="Fechar aviso">×</button></div>
+        <div class="campo"><span>Formas de pagamento</span>
+          <div class="chips clientes formas" id="neg-formas" role="group" aria-label="Formas de pagamento">
+            <button class="chip claro" type="button" data-fp="pix" aria-pressed="false">Pix</button>
+            <button class="chip claro" type="button" data-fp="debito" aria-pressed="false">Débito</button>
+            <button class="chip claro" type="button" data-fp="credito" aria-pressed="false">Crédito</button>
+            <button class="chip claro" type="button" data-fp="dinheiro" aria-pressed="false">Dinheiro</button>
+          </div>
+          <span class="ajuda neutra">Marque quantas quiser. Podem ser trocadas em cada orçamento, no painel de envio.</span>
+        </div>
+        <label class="campo" id="neg-pix-campo" hidden><span>Chave Pix</span>
+          <span class="caixa texto"><input id="neg-pix" type="text" maxlength="77" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória"></span>
+          <span class="ajuda neutra">Vai no orçamento quando Pix estiver marcado.</span>
         </label>
         <label class="campo"><span>Observação padrão</span>
           <span class="caixa texto"><input id="neg-obs" type="text" maxlength="160" autocomplete="off" placeholder="Ex.: 50% na aprovação, 50% na entrega"></span>
@@ -691,19 +959,17 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
   </section>
 
   <!-- TELA: HISTÓRICO DE ORÇAMENTOS -->
-  <section class="tela" id="tela-hist" aria-label="Orçamentos enviados" hidden>
+  <section class="tela" id="tela-hist" aria-label="Pedidos" hidden>
     <header>
-      <button class="icone" type="button" id="hist-voltar" aria-label="Voltar">
+      <!-- Lista filtrada aberta pelo Negócio ou pelo Início (A receber, Esperando resposta, Vencidos, Ver): tela de tarefa com seta e o nome do filtro -->
+      <button class="icone" type="button" id="hist-voltar" aria-label="Voltar" hidden>
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
       </button>
-      <h1>Orçamentos</h1>
+      <h1 id="hist-titulo">Pedidos</h1>
+      <button class="btn-ped" type="button" id="ped-novo">+ Pedido</button>
     </header>
     <main>
       <div class="bloco" id="hist-controles" style="gap:10px">
-        <div class="aba" role="group" aria-label="Tela">
-          <button type="button" aria-pressed="true">Lista</button>
-          <button type="button" data-aba="vendas" aria-pressed="false">Vendas</button>
-        </div>
         <label class="caixa busca"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4A524A" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="hist-busca" type="search" inputmode="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Buscar cliente, peça ou nº" aria-label="Buscar"></label>
         <div class="chips" id="hist-per" role="group" aria-label="Período">
           <button class="chip" type="button" data-per="hoje" aria-pressed="false">Hoje</button>
@@ -712,12 +978,24 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
           <button class="chip" type="button" data-per="mes" aria-pressed="false">Mês</button>
           <button class="chip" type="button" data-per="tudo" aria-pressed="false">Tudo</button>
         </div>
-        <!-- Situação: toque para filtrar, toque de novo para voltar a mostrar todas. Enviado e Vencido = quem aguarda resposta (sem período). -->
-        <div class="chips sit" id="hist-sit" role="group" aria-label="Situação">
-          <button class="chip" type="button" data-sit="enviado" aria-pressed="false">Enviado</button>
+        <!-- Etapa: toque para filtrar, toque de novo para mostrar todos. Pedido, Orçado, Vencido, Aprovado, Produção, Embalagem e Pronto são filas (sem período).
+             O número no chip é quantos itens aparecem ao tocar nele (sem contar a busca); zero = sem número e texto mais claro. -->
+        <div class="chips sit" id="hist-sit" role="group" aria-label="Etapa e pagamento">
+          <button class="chip" type="button" data-sit="pedido" aria-pressed="false">Pedido</button>
+          <button class="chip" type="button" data-sit="enviado" aria-pressed="false">Orçado</button>
           <button class="chip" type="button" data-sit="vencido" aria-pressed="false">Vencido</button>
           <button class="chip" type="button" data-sit="aprovado" aria-pressed="false">Aprovado</button>
-          <button class="chip" type="button" data-sit="recusado" aria-pressed="false">Recusado</button>
+          <button class="chip" type="button" data-sit="producao" aria-pressed="false">Produção</button>
+          <button class="chip" type="button" data-sit="embalagem" aria-pressed="false">Embalagem</button>
+          <button class="chip" type="button" data-sit="pronto" aria-pressed="false">Pronto</button>
+          <span class="traco" aria-hidden="true"></span>
+          <button class="chip" type="button" data-sit="entregue" data-grupo="hist" aria-pressed="false">Entregue</button>
+          <button class="chip" type="button" data-sit="recusado" data-grupo="hist" aria-pressed="false">Recusado</button>
+          <button class="chip" type="button" data-sit="cancelado" data-grupo="hist" aria-pressed="false">Cancelado</button>
+          <span class="traco" aria-hidden="true"></span>
+          <button class="chip pag" type="button" data-pag="pendente" aria-pressed="false">Pendente</button>
+          <button class="chip pag" type="button" data-pag="parcial" aria-pressed="false">Parcial</button>
+          <button class="chip pag" type="button" data-pag="pago" aria-pressed="false">Pago</button>
         </div>
         <p class="resumo-sit" id="hist-sit-resumo" aria-live="polite" hidden></p>
         <section class="resumo" id="hist-resumo" aria-live="polite" aria-label="Resumo do período">
@@ -725,6 +1003,12 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
           <div class="num"><b id="hist-total">R$ 0,00</b><span>em orçamentos</span></div>
           <div class="num apr"><b id="hist-apr">0</b><span id="hist-apr-txt">aprovados</span></div>
           <div class="vendas"><div class="num apr"><span>Vendas aprovadas</span><b id="hist-apr-valor">R$ 0,00</b></div><button type="button" class="ver-painel" id="hist-ver-painel">Ver painel <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button></div>
+        </section>
+        <!-- A receber (lista aberta pelo Negócio): quanto falta e quanto entrou no período -->
+        <section class="cartao receber-cartao" id="hist-receber" aria-live="polite" aria-label="A receber" hidden>
+          <span class="rot">Falta receber</span>
+          <b id="hr-falta">R$ 0,00</b>
+          <div class="hr-rodape"><span id="hr-qtd"></span><span id="hr-recebido"></span></div>
         </section>
         <!-- Lembrete de backup: aparece com 20 ou mais orçamentos desde o último backup (ou sem backup nenhum) -->
         <div class="faixa-backup" id="hist-lembrete" hidden><p id="hist-lembrete-txt"></p><button type="button" id="hist-lembrete-fazer">Fazer backup</button></div>
@@ -744,10 +1028,6 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
       <h1>Orçamentos</h1>
     </header>
     <main>
-      <div class="aba" role="group" aria-label="Tela">
-        <button type="button" data-aba="lista" aria-pressed="false">Lista</button>
-        <button type="button" aria-pressed="true">Vendas</button>
-      </div>
       <div class="chips" role="group" aria-label="Período">
         <button class="chip" type="button" data-perv="hoje" aria-pressed="false">Hoje</button>
         <button class="chip" type="button" data-perv="7" aria-pressed="false">7 dias</button>
@@ -829,6 +1109,35 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
   </section>
 
 </div>
+<!-- BARRA DE ABAS -->
+<nav class="abas" id="abas" aria-label="Navegação principal" hidden>
+  <button type="button" data-nav="inicio"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/></svg><span>Início</span></button>
+  <button type="button" data-nav="pedidos"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Pedidos</span></button>
+  <button type="button" data-nav="orcar" class="orcar" aria-label="Orçar"><span class="mais-btn"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span>Orçar</span></button>
+  <button type="button" data-nav="negocio"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span>Negócio</span></button>
+  <button type="button" data-nav="mais"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Mais</span></button>
+</nav>
+
+<!-- AVISO DEPOIS DE ENVIAR O ORÇAMENTO -->
+<div class="env-aviso" id="env-aviso" hidden>
+  <div class="env-fundo" id="env-fundo"></div>
+  <div class="env-caixa" role="status">
+    <p><strong id="env-titulo"></strong><span>Os campos continuam aqui até você limpar</span></p>
+    <button class="btn principal" type="button" id="env-inicio">Voltar ao início</button>
+  </div>
+</div>
+
+<!-- PERGUNTA: SAIR DE MAIS COM ALTERAÇÕES NÃO SALVAS -->
+<div class="folha" id="folha-sair-cfg" hidden>
+  <div class="folha-fundo" id="sair-cfg-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="sair-cfg-titulo">
+    <div class="folha-topo"><strong id="sair-cfg-titulo">Alterações não salvas</strong></div>
+    <p class="ajuda">Salve antes de sair, senão o que você mudou se perde.</p>
+    <button class="btn principal" type="button" id="sair-cfg-salvar">Salvar</button>
+    <button class="btn" type="button" id="sair-cfg-descartar">Descartar</button>
+  </div>
+</div>
+
 <!-- PAINEL: ENVIAR ORÇAMENTO (texto ou imagem) -->
 <div class="folha" id="folha-cores" hidden>
   <div class="folha-fundo" id="cores-fundo"></div>
@@ -861,23 +1170,65 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
       <span class="caixa texto"><input id="env-cliente" type="text" maxlength="60" autocomplete="off" placeholder="Nome do cliente"></span>
     </label>
     <div class="chips clientes" id="env-clientes" hidden></div>
-    <p class="ajuda neutra" id="env-ajuda">Vale para texto e imagem. Fica guardado só no seu histórico; o texto enviado ao cliente não muda.</p>
+    <!-- Desde o 0.6.0-teste.13: descrição e prazo valem para Texto, Imagem e Registrar sem enviar (ficam acima dos botões: tocar em Texto já envia) -->
+    <label class="campo"><span>Descrição da peça (opcional)</span>
+      <span class="caixa texto"><input id="img-descricao" type="text" maxlength="120" autocomplete="off" placeholder="Peça impressa em 3D"></span>
+    </label>
+    <label class="campo"><span>Prazo de entrega</span>
+      <span class="caixa texto"><input id="img-prazo" type="text" maxlength="40" autocomplete="off" placeholder="Ex.: 5 dias úteis"></span>
+    </label>
+    <!-- Pagamento e observação deste orçamento (desde o 0.6.0-teste.14): recolhido, com o resumo; vem de Meu negócio e pode ser trocado só aqui -->
+    <div class="pg-bloco" id="pg-bloco">
+      <button class="pg-abrir" type="button" id="pg-abrir" aria-expanded="false" aria-controls="pg-painel">
+        <span class="pg-txt"><b>Pagamento e observação <i class="pg-selo" id="pg-selo" hidden>só neste orçamento</i></b><small id="pg-resumo"></small></span>
+        <span class="pg-acao" id="pg-acao">Alterar</span>
+      </button>
+      <div class="bloco pg-painel" id="pg-painel" hidden>
+        <div class="campo"><span>Formas de pagamento</span>
+          <div class="chips clientes formas" id="env-formas" role="group" aria-label="Formas de pagamento deste orçamento">
+            <button class="chip claro" type="button" data-fp="pix" aria-pressed="false">Pix</button>
+              <button class="chip claro" type="button" data-fp="debito" aria-pressed="false">Débito</button>
+              <button class="chip claro" type="button" data-fp="credito" aria-pressed="false">Crédito</button>
+              <button class="chip claro" type="button" data-fp="dinheiro" aria-pressed="false">Dinheiro</button>
+          </div>
+        </div>
+        <label class="campo" id="env-pix-campo"><span>Chave Pix</span>
+          <span class="caixa texto"><input id="env-pix" type="text" maxlength="77" autocomplete="off" autocapitalize="off" spellcheck="false"></span>
+        </label>
+        <label class="campo"><span>Observação</span>
+          <span class="caixa area"><textarea id="env-obs" rows="2" maxlength="160"></textarea></span>
+        </label>
+        <div class="pg-rodape"><span>Vale só para este orçamento. O padrão fica em Mais › Meu negócio.</span><button type="button" id="pg-padrao" hidden>Voltar ao padrão</button></div>
+      </div>
+    </div>
+    <p class="ajuda neutra" id="env-ajuda">Descrição, prazo, pagamento e observação vão no texto e na imagem. Vazios, ficam de fora. O cliente fica só no seu histórico (e aparece na imagem).</p>
     <div class="grade2">
       <button class="btn grande" type="button" id="enviar-texto">Texto</button>
       <button class="btn grande" type="button" id="abrir-imagem" aria-pressed="false">Imagem</button>
     </div>
     <div class="bloco" id="painel-imagem" hidden>
-      <label class="campo"><span>Descrição da peça (opcional)</span>
-        <span class="caixa texto"><input id="img-descricao" type="text" maxlength="120" autocomplete="off" placeholder="Peça impressa em 3D"></span>
-      </label>
-      <label class="campo"><span>Prazo de entrega</span>
-        <span class="caixa texto"><input id="img-prazo" type="text" maxlength="40" autocomplete="off"></span>
-      </label>
       <div class="previa">
         <img id="img-previa" alt="Pré-visualização do orçamento" hidden>
         <span class="ajuda neutra" id="img-estado">Preparando a imagem…</span>
       </div>
       <button class="btn principal" type="button" id="enviar-imagem" disabled>Enviar imagem</button>
+    </div>
+    <!-- Orçamento informado pessoalmente ou por telefone: grava como Orçado, com Nº e validade, sem compartilhar -->
+    <button class="se-abrir" type="button" id="se-abrir" aria-expanded="false" aria-controls="painel-sem-envio">
+      <span><b>Registrar sem enviar</b><small>Orçamento informado pessoalmente ou por telefone</small></span>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+    <div class="bloco" id="painel-sem-envio" hidden>
+      <div class="campo"><span>Como foi informado? (opcional)</span>
+        <div class="seg" id="se-informado" role="group" aria-label="Como foi informado">
+          <button type="button" data-inf="presencial" aria-pressed="false">Pessoalmente</button>
+          <button type="button" data-inf="telefone" aria-pressed="false">Telefone</button>
+          <button type="button" data-inf="outro" aria-pressed="false">Outro</button>
+        </div>
+      </div>
+      <label class="marcar"><input type="checkbox" id="se-aprovado"><span>Já aprovado pelo cliente</span></label>
+      <button class="btn principal" type="button" id="se-registrar">Registrar orçamento</button>
+      <p class="ajuda neutra">Fica em Pedidos como Orçado, com Nº e validade. Dá para enviar depois pelo WhatsApp, com o mesmo Nº.</p>
     </div>
   </div>
 </div>
@@ -887,7 +1238,7 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
   <div class="folha-fundo" id="det-fundo"></div>
   <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="det-titulo" style="gap:10px">
     <div class="folha-topo">
-      <strong id="det-titulo"><i>Orçamento</i> <span id="det-numero"></span></strong>
+      <strong id="det-titulo"><i id="det-tit-rot">Orçamento</i> <span id="det-numero"></span></strong>
       <button class="fechar" type="button" id="det-fechar" aria-label="Fechar">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
@@ -897,28 +1248,150 @@ main{flex:1;display:flex;flex-direction:column;gap:12px;padding:14px calc(20px +
       <label class="campo"><span>Cliente</span><span class="caixa texto"><input id="det-cliente" type="text" maxlength="60" autocomplete="off" placeholder="Sem cliente"></span></label>
       <label class="campo"><span>Peça</span><span class="caixa texto"><input id="det-peca" type="text" maxlength="120" autocomplete="off" placeholder="Sem descrição"></span></label>
     </div>
-    <div class="linha"><div class="rot"><strong id="det-qtd"></strong><span id="det-mat"></span></div><span class="val" id="det-total" style="font-size:18px;font-weight:800"></span></div>
-    <div class="interno"><span class="tag">Só você vê</span>
+    <div class="linha" id="det-linha-total"><div class="rot"><strong id="det-qtd"></strong><span id="det-mat"></span></div><span class="val" id="det-total" style="font-size:18px;font-weight:800"></span></div>
+    <div class="interno" id="det-interno"><span class="tag">Só você vê</span>
       <div class="linha"><div class="rot"><strong>Custo total</strong></div><span class="val" id="det-custo"></span></div>
       <div class="linha"><div class="rot"><strong>Lucro</strong></div><span class="val" id="det-lucro" style="font-weight:800"></span></div>
     </div>
-    <div class="campo"><span>Situação</span>
+    <p class="nota-pedido" id="det-texto" hidden></p>
+    <div class="campo" id="det-bloco-seg"><span>Situação</span>
       <div class="seg" id="det-seg" role="group" aria-label="Situação">
-        <button type="button" data-st="enviado" aria-pressed="false">Enviado</button>
+        <button type="button" data-st="enviado" aria-pressed="false">Orçado</button>
         <button type="button" data-st="aprovado" aria-pressed="false">Aprovado</button>
         <button type="button" data-st="recusado" aria-pressed="false">Recusado</button>
       </div>
       <span class="ajuda neutra" id="det-st-info"></span>
     </div>
+    <div class="campo" id="det-bloco-etapa" hidden><span>Etapa</span>
+      <div class="linha-etapa"><span class="pill" id="det-etapa-pill"></span><span class="ajuda neutra" id="det-etapa-info"></span></div>
+      <button class="btn principal" type="button" id="det-avancar"></button>
+      <button class="btn mais peq" type="button" id="det-mais-op" aria-expanded="false">Mais opções</button>
+      <div class="opcoes-etapa" id="det-opcoes" hidden></div>
+    </div>
+    <div class="campo" id="det-bloco-pag" hidden><span>Pagamento</span>
+      <div class="linha-etapa"><span class="pill-pag" id="det-pag-pill"></span><span class="ajuda neutra" id="det-pag-info"></span></div>
+      <span class="ajuda neutra" id="det-pag-cond"></span>
+      <div class="recs" id="det-recs"></div>
+      <div class="grade2" id="det-pag-acoes">
+        <button class="btn peq" type="button" id="det-rec-novo">Registrar recebimento</button>
+        <button class="btn mais peq" type="button" id="det-cond-mudar">Mudar condição</button>
+      </div>
+    </div>
+    <div class="campo" id="det-bloco-pedido" hidden>
+      <button class="btn principal" type="button" id="det-orcar">Orçar este pedido</button>
+      <button class="btn mais peq perigo" type="button" id="det-ped-cancelar">Cancelar pedido</button>
+    </div>
     <p class="nota-antigo" id="det-antigo" hidden>Orçamento anterior à versão 0.4.0: sem os dados da mesa.</p>
-    <div class="grade2">
-      <button class="btn" type="button" id="det-reenviar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg>Reenviar</button>
+    <div class="grade2" id="det-acoes-orc">
+      <button class="btn" type="button" id="det-reenviar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="m16 6-4-4-4 4"/><path d="M12 2v13"/></svg><span id="det-reenviar-txt">Reenviar</span></button>
       <button class="btn" type="button" id="det-usar">Usar de novo</button>
     </div>
     <div class="grade2">
       <button class="btn mais peq" type="button" id="det-catalogo">Salvar no catálogo</button>
       <button class="btn mais peq perigo" type="button" id="det-excluir">Excluir</button>
     </div>
+  </div>
+</div>
+
+<!-- PAINEL: ANOTAR PEDIDO -->
+<div class="folha" id="folha-pedido" hidden>
+  <div class="folha-fundo" id="ped-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="ped-titulo" style="gap:10px">
+    <div class="folha-topo"><strong id="ped-titulo">Anotar pedido</strong>
+      <button class="fechar" type="button" id="ped-fechar" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <label class="campo"><span>Cliente</span><span class="caixa texto"><input id="ped-cliente" type="text" maxlength="60" autocomplete="off" placeholder="Nome do cliente"></span></label>
+    <label class="campo"><span>O que foi pedido</span><span class="caixa area"><textarea id="ped-texto" rows="3" maxlength="600" placeholder="Cole a mensagem do cliente ou escreva o pedido"></textarea></span></label>
+    <div class="grade2">
+      <label class="campo"><span>Quantidade</span><span class="caixa"><input id="ped-qtd" type="text" inputmode="numeric" autocomplete="off" value="1"></span></label>
+      <label class="campo"><span>Prazo desejado</span><span class="caixa texto"><input id="ped-prazo" type="date"></span></label>
+    </div>
+    <div class="campo"><span>Canal</span>
+      <div class="seg seg4" id="ped-canal" role="group" aria-label="Canal">
+        <button type="button" data-canal="whatsapp" aria-pressed="false">WhatsApp</button>
+        <button type="button" data-canal="instagram" aria-pressed="false">Instagram</button>
+        <button type="button" data-canal="presencial" aria-pressed="false">Presencial</button>
+        <button type="button" data-canal="outro" aria-pressed="false">Outro</button>
+      </div>
+    </div>
+    <button class="btn principal" type="button" id="ped-salvar">Salvar pedido</button>
+  </div>
+</div>
+
+<!-- PAINEL: COBRAR RESPOSTA -->
+<div class="folha" id="folha-cobrar" hidden>
+  <div class="folha-fundo" id="cob-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="cob-titulo" style="gap:10px">
+    <div class="folha-topo"><strong id="cob-titulo">Cobrar resposta</strong>
+      <button class="fechar" type="button" id="cob-fechar" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <p class="ajuda neutra" id="cob-info"></p>
+    <label class="campo"><span>Mensagem</span><span class="caixa area"><textarea id="cob-msg" rows="5" maxlength="600"></textarea></span></label>
+    <button class="btn principal" type="button" id="cob-enviar">Enviar mensagem</button>
+    <div class="grade2">
+      <button class="btn mais" type="button" id="cob-aprovado">Aprovado</button>
+      <button class="btn mais" type="button" id="cob-recusado">Recusado</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAINEL: CONDIÇÃO DE PAGAMENTO (ao aprovar ou ao mudar) -->
+<div class="folha" id="folha-cond" hidden>
+  <div class="folha-fundo" id="cond-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="cond-titulo" style="gap:10px">
+    <div class="folha-topo"><strong id="cond-titulo">Aprovar pedido</strong>
+      <button class="fechar" type="button" id="cond-fechar" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <p class="ajuda neutra" id="cond-total"></p>
+    <div class="campo"><span>Como o cliente vai pagar</span>
+      <div class="seg" id="cond-seg" role="group" aria-label="Condição de pagamento">
+        <button type="button" data-cond="entrega" aria-pressed="true">Na entrega</button>
+        <button type="button" data-cond="entrada" aria-pressed="false">Entrada</button>
+        <button type="button" data-cond="pago" aria-pressed="false">Já pago</button>
+      </div>
+      <span class="ajuda neutra" id="cond-ajuda"></span>
+    </div>
+    <div class="campo" id="cond-entrada" hidden><span>Valor da entrada</span>
+      <div class="chips" id="cond-pcts">
+        <button class="chip" type="button" data-pct="30" aria-pressed="false">30%</button>
+        <button class="chip" type="button" data-pct="50" aria-pressed="false">50%</button>
+        <button class="chip" type="button" data-pct="70" aria-pressed="false">70%</button>
+      </div>
+      <span class="caixa"><b>R$</b><input id="cond-valor" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00"></span>
+    </div>
+    <button class="btn principal" type="button" id="cond-ok">Aprovar</button>
+  </div>
+</div>
+
+<!-- PAINEL: REGISTRAR RECEBIMENTO -->
+<div class="folha" id="folha-rec" hidden>
+  <div class="folha-fundo" id="rec-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="rec-titulo" style="gap:10px">
+    <div class="folha-topo"><strong id="rec-titulo">Registrar recebimento</strong>
+      <button class="fechar" type="button" id="rec-fechar" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <p class="ajuda neutra" id="rec-info"></p>
+    <div class="grade2">
+      <label class="campo"><span>Valor</span><span class="caixa"><b>R$</b><input id="rec-valor" type="text" inputmode="decimal" autocomplete="off" placeholder="0,00"></span></label>
+      <label class="campo"><span>Data</span><span class="caixa texto"><input id="rec-data" type="date"></span></label>
+    </div>
+    <div class="campo"><span>Forma</span>
+      <div class="chips clientes" id="rec-forma" role="group" aria-label="Forma de pagamento">
+        <button class="chip claro" type="button" data-forma="pix" aria-pressed="true">Pix</button>
+        <button class="chip claro" type="button" data-forma="debito" aria-pressed="false">Débito</button>
+        <button class="chip claro" type="button" data-forma="credito" aria-pressed="false">Crédito</button>
+        <button class="chip claro" type="button" data-forma="dinheiro" aria-pressed="false">Dinheiro</button>
+      </div>
+    </div>
+    <button class="btn principal" type="button" id="rec-ok">Salvar recebimento</button>
+  </div>
+</div>
+
+<!-- PAINEL: CANCELAR PEDIDO -->
+<div class="folha" id="folha-cancelar" hidden>
+  <div class="folha-fundo" id="cancelar-fundo"></div>
+  <div class="folha-corpo" role="dialog" aria-modal="true" aria-labelledby="cancelar-titulo">
+    <div class="folha-topo"><strong id="cancelar-titulo">Cancelar este pedido?</strong></div>
+    <p class="ajuda" id="cancelar-txt"></p>
+    <button class="btn principal" type="button" id="cancelar-sim" style="background:#A3360A">Cancelar pedido</button>
+    <button class="btn principal" type="button" id="cancelar-devolvi" hidden>Devolvi o valor</button>
+    <button class="btn" type="button" id="cancelar-nao">Voltar</button>
   </div>
 </div>
 
